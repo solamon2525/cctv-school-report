@@ -16,10 +16,9 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   const areas0 = activeSchool === 's1' ? AREAS_KP : AREAS_HL;
   const cams   = load<any>(K.cams).filter((c:any) => c.schoolId === activeSchool);
 
-  const hourNow = new Date().getHours();
-  const defaultShift: Shift = hourNow < 12 ? 'morning' : 'afternoon';
+  const getDefaultShift = (): Shift => new Date().getHours() < 12 ? 'morning' : 'afternoon';
 
-  const [shift,    setShift]    = useState<Shift>(defaultShift);
+  const [shift,    setShift]    = useState<Shift>(getDefaultShift);
   const [time,     setTime]     = useState(nowTime());
   const [areas,    setAreas]    = useState<AreaReport[]>(() => areas0.map(a=>({area:a,status:'ok',note:''})));
   const [note,     setNote]     = useState('');

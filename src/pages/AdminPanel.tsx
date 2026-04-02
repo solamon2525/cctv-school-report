@@ -28,14 +28,14 @@ function UserMgmt() {
       newUser={id:'u'+Date.now(),name:name.trim(),role,schoolId:schoolId||null,pin};
     }
     saveUser(newUser); toast(editId?'แก้ไขแล้ว':'เพิ่มแล้ว','ok');
-    setName('');setPin('');setEId(null); setTimeout(()=>window.location.reload(), 500);
+    setName('');setPin('');setEId(null);
   };
   const edit=(u:AppUser)=>{setEId(u.id);setName(u.name);setRole(u.role==='director'?'teacher':u.role as any);setSId(u.schoolId||'s1');setPin('');};
   const del=(id:string)=>{
     if(load<AppUser>(K.users).find(u=>u.id===id)?.role==='director'){toast('ไม่สามารถลบผู้อำนวยการได้','err');return;}
     if(!confirm('ลบผู้ใช้นี้?'))return;
     deleteUser(id);
-    toast('ลบแล้ว','warn'); setTimeout(()=>window.location.reload(), 500);
+    toast('ลบแล้ว','warn');
   };
   const reports=load<DutyReport>(K.reports);
 
@@ -55,7 +55,7 @@ function UserMgmt() {
           </select>
         </div>
         <div style={{marginBottom:18}}><label style={{display:'block',fontSize:11,fontWeight:600,color:'#a89f8c',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:5}}>PIN {editId?'(ว่าง = คงเดิม)':' *'}</label>
-          <input type="password" maxLength={4} value={pin} onChange={e=>setPin(e.target.value.replace(/\D/,'').slice(0,4))} placeholder="4 หลัก" style={inp({fontFamily:'IBM Plex Mono,monospace',letterSpacing:'0.3em'})}/>
+          <input type="password" maxLength={4} value={pin} onChange={e=>setPin(e.target.value.replace(/\D/g,'').slice(0,4))} placeholder="4 หลัก" style={inp({fontFamily:'IBM Plex Mono,monospace',letterSpacing:'0.3em'})}/>
         </div>
         <div style={{display:'flex',gap:8}}>
           {editId&&<button onClick={()=>{setEId(null);setName('');setPin('');}} style={{flex:1,background:'#fff',border:'1px solid #e5e0d4',borderRadius:8,padding:10,fontSize:14,cursor:'pointer',fontFamily:'Sarabun,sans-serif',color:'#574f44'}}>ยกเลิก</button>}
@@ -100,9 +100,9 @@ function DutyMgmt() {
     const entry:DutySchedule={id:'duty-'+Date.now(),schoolId:selSchool,date:selDate,shift:selShift,teacherId:selUser,timestamp:Date.now()};
     const exist=getDuty(selSchool,selDate,selShift);
     if(exist) entry.id=exist.id;
-    saveDuty(entry); toast(`กำหนดเวร ${users.find(u=>u.id===selUser)?.name?.split(' ')[0]} สำเร็จ`,'ok'); setTimeout(()=>window.location.reload(), 500);
+    saveDuty(entry); toast(`กำหนดเวร ${users.find(u=>u.id===selUser)?.name?.split(' ')[0]} สำเร็จ`,'ok');
   };
-  const rem=(id:string)=>{deleteDuty(id);toast('ยกเลิกแล้ว','warn');setTimeout(()=>window.location.reload(), 500);};
+  const rem=(id:string)=>{deleteDuty(id);toast('ยกเลิกแล้ว','warn');};
   const dayNames=['อา','จ','อ','พ','พฤ','ศ','ส'];
 
   return(
@@ -261,7 +261,7 @@ function DatabaseMgmt() {
   };
 
   return (
-    <div style={{ background: '#fff', border: '1px solid #e5e0d4', borderRadius: 12, padding: 24, maxWidth: 500 }}>
+    <div style={{ background: '#fff', border: '1px solid #e5e0d4', borderRadius: 12, padding: 24, maxWidth: 500, width:'100%' }}>
       <div style={{ fontSize: 16, fontWeight: 700, color: '#252018', marginBottom: 20 }}>จัดการฐานข้อมูลระบบ</div>
       
       <div style={{ background: '#f0f7f2', border: '1px solid #b3dcc0', borderRadius: 8, padding: 16, marginBottom: 16 }}>

@@ -92,7 +92,7 @@ export default function App() {
 
         {/* User info + logout */}
         <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
-          <div style={{ textAlign:'right', display:'none' /* Can hide on very small screens if we wanted, but we will just let it show */ }}>
+          <div style={{ textAlign:'right' }}>
             <div style={{ fontSize:12, fontWeight:600, color:'#252018' }}>{user.name}</div>
             <div style={{ fontSize:10, color:'#a89f8c' }}>
               {user.role==='director'?'ผู้อำนวยการ':user.role==='admin'?'Admin':load<School>(K.schools).find(s=>s.id===user.schoolId)?.shortName||''}

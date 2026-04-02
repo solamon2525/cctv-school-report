@@ -27,7 +27,8 @@ export default function History({ schoolId, user }: Props) {
   const del = (id:string) => {
     if (!confirm('ลบรายงานนี้?')) return;
     deleteReport(id);
-    toast('ลบรายงานแล้ว','warn'); setTimeout(()=>window.location.reload(), 500);
+    // Firebase listener in App.tsx will trigger re-render via key={syncTick}
+    toast('ลบรายงานแล้ว','warn');
   };
 
   const inp = (s?:React.CSSProperties):React.CSSProperties => ({background:'#fff',border:'1px solid #e5e0d4',borderRadius:7,padding:'8px 11px',fontFamily:'Sarabun,sans-serif',fontSize:14,color:'#252018',outline:'none',...s});

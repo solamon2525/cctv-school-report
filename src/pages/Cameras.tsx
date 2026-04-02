@@ -11,13 +11,13 @@ export default function Cameras({ schoolId }: { schoolId:string }) {
   const cams = load<Camera>(K.cams).filter(c => c.schoolId === schoolId);
   const ok=cams.filter(c=>c.status==='ok').length;
 
-  const setSt = (id:string, status:CamStatus) => { updateCamera(id, {status}); toast(`${id}: ${stLbl[status]}`,'ok'); setTimeout(()=>window.location.reload(), 500); };
-  const del = (id:string) => { if(!confirm('ลบกล้องนี้?'))return; deleteCamera(id); toast('ลบกล้องแล้ว','warn'); setTimeout(()=>window.location.reload(), 500); };
+  const setSt = (id:string, status:CamStatus) => { updateCamera(id, {status}); toast(`${id}: ${stLbl[status]}`,'ok'); };
+  const del = (id:string) => { if(!confirm('ลบกล้องนี้?'))return; deleteCamera(id); toast('ลบกล้องแล้ว','warn'); };
   const doAdd = () => {
     if(!newId||!newName){toast('กรุณากรอกรหัสและชื่อกล้อง','err');return;}
     if(cams.find(c=>c.id===newId)){toast('รหัสนี้มีอยู่แล้ว','err');return;}
     saveCamera({id:newId,schoolId,name:newName,location:newLoc||'—',zone:newZone,status:'ok'});
-    toast(`เพิ่ม ${newId} สำเร็จ`,'ok'); setShowAdd(false); [setNewId,setNewName,setNewLoc].forEach(s=>s('')); setTimeout(()=>window.location.reload(), 500);
+    toast(`เพิ่ม ${newId} สำเร็จ`,'ok'); setShowAdd(false); [setNewId,setNewName,setNewLoc].forEach(s=>s(''));
   };
   const inp=(s?:React.CSSProperties):React.CSSProperties=>({background:'#fff',border:'1px solid var(--neutral-200)',borderRadius:8,padding:'9px 12px',fontFamily:'Sarabun,sans-serif',fontSize:14,color:'var(--neutral-700)',outline:'none',width:'100%',...s});
 
@@ -47,9 +47,9 @@ export default function Cameras({ schoolId }: { schoolId:string }) {
         <div onClick={e=>e.target===e.currentTarget&&setShowAdd(false)} style={{position:'fixed',inset:0,background:'rgba(30,42,28,.35)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
           <div style={{background:'#fff',borderRadius:12,padding:24,width:'100%',maxWidth:440}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:18}}><div style={{fontSize:16,fontWeight:700}}>เพิ่มกล้อง CCTV</div><button onClick={()=>setShowAdd(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--neutral-400)'}}>✕</button></div>
-            {[['รหัสกล้อง','เช่น CAM-13',newId,setNewId],['ชื่อกล้อง','เช่น กล้องหน้าโรงเรียน',newName,setNewName],['จุดติดตั้ง','เช่น ประตูหน้า',newLoc,setNewLoc]].map(([l,p,v,s])=>(
+            {([['รหัสกล้อง','เช่น CAM-13',newId,setNewId],['ชื่อกล้อง','เช่น กล้องหน้าโรงเรียน',newName,setNewName],['จุดติดตั้ง','เช่น ประตูหน้า',newLoc,setNewLoc]] as [string,string,string,React.Dispatch<React.SetStateAction<string>>][]).map(([l,p,v,s])=>(
               <div key={l} style={{marginBottom:14}}><label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--neutral-400)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:5}}>{l}</label>
-                <input placeholder={p as string} value={v as string} onChange={e=>(s as any)(e.target.value)} style={inp()}/></div>
+                <input placeholder={p} value={v} onChange={e=>s(e.target.value)} style={inp()}/></div>
             ))}
             <div style={{marginBottom:16}}><label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--neutral-400)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:5}}>โซน</label>
               <select value={newZone} onChange={e=>setNewZone(e.target.value as CamZone)} style={inp()}>
