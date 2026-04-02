@@ -25,9 +25,12 @@ export default function App() {
   useEffect(() => {
     const unsubs = [
       onSnapshot(collection(db, COL.schools), snap => { save(K.schools, snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
-      onSnapshot(collection(db, COL.users), snap => { save(K.users, snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
-      onSnapshot(query(collection(db, COL.reports), orderBy('timestamp', 'desc')), snap => { save(K.reports, snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
-      onSnapshot(collection(db, COL.cameras), snap => { save(K.cams, snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
+      onSnapshot(collection(db, COL.users),   snap => { save(K.users,   snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
+      onSnapshot(query(collection(db, COL.reports), orderBy('timestamp', 'desc')), snap => {
+        save(K.reports, snap.docs.map(d=>({id:d.id, ...d.data()})));
+        setSyncTick(t=>t+1);
+      }),
+      onSnapshot(collection(db, COL.cameras), snap => { save(K.cams,  snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
       onSnapshot(query(collection(db, COL.duty), orderBy('date', 'asc')), snap => { save(K.duty, snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); })
     ];
     return () => unsubs.forEach(u => u());
@@ -101,9 +104,9 @@ export default function App() {
 
       {/* Pages */}
       <div style={{ minHeight:'calc(100vh - 52px)' }}>
-        {page==='dashboard'  && <Dashboard user={user} onNav={onNav} schoolId={schoolId}/>}
+        {page==='dashboard'  && <Dashboard key={syncTick} user={user} onNav={onNav} schoolId={schoolId}/>}
         {page==='new-report' && <NewReport user={user} onNav={onNav} schoolId={user.schoolId||schoolId}/>}
-        {page==='history'    && <History   user={user} schoolId={schoolId}/>}
+        {page==='history'    && <History   key={syncTick} user={user} schoolId={schoolId}/>}
         {page==='admin'      && canAdmin && <AdminPanel user={user} onLogout={onAdminLogout}/>}
       </div>
     </div>

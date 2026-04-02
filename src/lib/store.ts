@@ -81,8 +81,19 @@ export const fmtTime = (d: string) => {
   const dt = new Date(d+'T12:00:00');
   return dt.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 };
-export const today = () => new Date().toISOString().slice(0,10);
-export const nowTime = () => new Date().toTimeString().slice(0,5);
+export const today = () => {
+  const d = new Date();
+  // Use Thailand timezone (UTC+7) to avoid date mismatch
+  const offset = 7 * 60; // minutes
+  const localDate = new Date(d.getTime() + (offset - d.getTimezoneOffset()) * 60000);
+  return localDate.toISOString().slice(0, 10);
+};
+export const nowTime = () => {
+  const d = new Date();
+  const h = d.getHours().toString().padStart(2, '0');
+  const m = d.getMinutes().toString().padStart(2, '0');
+  return `${h}:${m}`;
+};
 
 // ── Admin/Session ──
 export const ADMIN_SESSION_KEY = 'admin_session';
