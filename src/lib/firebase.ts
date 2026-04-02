@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 // ── Firebase Configuration ──
 // สร้าง Firebase project ที่ https://console.firebase.google.com
 // แล้วแทนที่ค่าด้านล่างด้วย config จริงของคุณ

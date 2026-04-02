@@ -26,6 +26,21 @@ export default function App() {
     // Ensure Firebase anonymous auth before setting up listeners
     ensureAuth().then(() => {
       console.log('Firebase auth ready');
+      
+      // Auto-restore default data if Firebase is completely empty (after clear database)
+      setTimeout(async () => {
+        const fbUsers = load<AppUser>(K.users);
+        if (!fbUsers || fbUsers.length === 0) {
+          const { setDoc, doc } = await import('firebase/firestore');
+          console.log('Restoring data back to Firebase...');
+          const { load: l } = await import('./lib/store');
+          for (const u of l<any>('app_users')) await setDoc(doc(db, COL.users, u.id), u);
+          for (const s of l<any>(K.schools)) await setDoc(doc(db, COL.schools, s.id), s);
+          for (const c of l<any>(K.cams)) await setDoc(doc(db, COL.cameras, c.id), c);
+          console.log('Restore complete!');
+        }
+      }, 3000);
+      
     }).catch(err => console.error('Auth failed:', err));
 
     const unsubs = [
