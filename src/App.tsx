@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { seedData, load, loadVal, saveVal, save, K, AppUser, School, getSchoolLogo } from './lib/store';
-import { db, COL } from './lib/firebase';
+import { db, COL, ensureAuth } from './lib/firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import LoginScreen from './components/LoginScreen';
 import Dashboard from './pages/Dashboard';
@@ -23,6 +23,11 @@ export default function App() {
   const [syncTick, setSyncTick] = useState(0);
 
   useEffect(() => {
+    // Ensure Firebase anonymous auth before setting up listeners
+    ensureAuth().then(() => {
+      console.log('Firebase auth ready');
+    }).catch(err => console.error('Auth failed:', err));
+
     const unsubs = [
       onSnapshot(collection(db, COL.schools), snap => { save(K.schools, snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
       onSnapshot(collection(db, COL.users),   snap => { save(K.users,   snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
@@ -107,7 +112,7 @@ export default function App() {
         {page==='dashboard'  && <Dashboard key={syncTick} user={user} onNav={onNav} schoolId={schoolId}/>}
         {page==='new-report' && <NewReport user={user} onNav={onNav} schoolId={user.schoolId||schoolId}/>}
         {page==='history'    && <History   key={syncTick} user={user} schoolId={schoolId}/>}
-        {page==='admin'      && canAdmin && <AdminPanel user={user} onLogout={onAdminLogout}/>}
+        {page==='admin'      && canAdmin && <AdminPanel key={syncTick} user={user} onLogout={onAdminLogout}/>}
       </div>
     </div>
   );

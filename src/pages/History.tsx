@@ -24,11 +24,15 @@ export default function History({ schoolId, user }: Props) {
   const slice = res.slice((pg-1)*PER,pg*PER);
   const schools = load<School>(K.schools);
 
-  const del = (id:string) => {
+  const del = async (id:string) => {
     if (!confirm('ลบรายงานนี้?')) return;
-    deleteReport(id);
-    // Firebase listener in App.tsx will trigger re-render via key={syncTick}
-    toast('ลบรายงานแล้ว','warn');
+    try {
+      await deleteReport(id);
+      toast('ลบรายงานแล้ว','warn');
+    } catch (err) {
+      console.error('Delete failed:', err);
+      toast('ลบไม่สำเร็จ: ' + (err as any)?.message, 'err');
+    }
   };
 
   const inp = (s?:React.CSSProperties):React.CSSProperties => ({background:'#fff',border:'1px solid #e5e0d4',borderRadius:7,padding:'8px 11px',fontFamily:'Sarabun,sans-serif',fontSize:14,color:'#252018',outline:'none',...s});
