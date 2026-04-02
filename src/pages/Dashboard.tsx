@@ -93,40 +93,122 @@ export default function Dashboard({ user, onNav, schoolId }: Props) {
       />
 
       <div style={{ padding:24 }}>
-        {/* Director: side-by-side school cards */}
-        {isDirector && (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:18, marginBottom:24 }}>
-            {schoolStats.map(({ school:s, todayR, monthR, hasMorn, hasAftn, issues }) => (
-              <div key={s.id} style={{ background:'#fff', border:`1px solid ${SCHOOL_C[s.id]}40`, borderRadius:12, overflow:'hidden' }}>
-                <div style={{ background:SCHOOL_C[s.id], padding:'13px 18px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                  <div style={{ fontSize:15, fontWeight:700, color:'#fff' }}>{s.name}</div>
-                  <span style={{ background: issues>0?'#fde8e8':'rgba(255,255,255,.2)', color: issues>0?'#b71c1c':'#fff', fontSize:11, fontWeight:700, padding:'3px 10px', borderRadius:20 }}>
-                    {issues>0 ? `⚠ ${issues} ปัญหา` : '✓ ปกติ'}
-                  </span>
+        {/* Director: Executive Dashboard */}
+        {isDirector && (() => {
+          const allRpts = load<DutyReport>(K.reports);
+          const td = today();
+          const todayRpts = allRpts.filter(r => r.date === td);
+          const todayIssues = todayRpts.filter(r => !r.isNormal).length;
+          const monthIssues = allRpts.filter(r => r.date.startsWith(thisM) && !r.isNormal).length;
+          
+          // Chart Data (Last 7 Days)
+          const last7 = Array.from({length:7}, (_,i) => {
+            const d = new Date(); d.setDate(d.getDate() - (6-i));
+            return d.toISOString().slice(0,10);
+          });
+          const maxRep = Math.max(1, ...last7.map(d => allRpts.filter(r=>r.date===d).length));
+
+          return (
+            <div style={{ display:'flex', flexDirection:'column', gap:24, marginBottom:24 }}>
+              
+              {/* 1. Hero KPI Cards */}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))', gap:16 }}>
+                <div style={{ background:'linear-gradient(135deg, #1e5c3b, #143d27)', borderRadius:16, padding:20, color:'#fff', boxShadow:'0 4px 20px rgba(30,92,59,0.2)' }}>
+                  <div style={{ fontSize:13, opacity:0.8, textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>รายงานวันนี้</div>
+                  <div style={{ fontSize:36, fontWeight:700, fontFamily:'IBM Plex Mono,monospace', lineHeight:1 }}>{todayRpts.length}</div>
                 </div>
-                <div style={{ padding:'14px 18px' }}>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:14 }}>
-                    {[['วันนี้',todayR.length,'var(--c)'],['เดือนนี้',monthR.length,'#574f44'],['ปัญหา',issues,issues?'#b71c1c':'#2e7d32']].map(([l,v,c])=>(
-                      <div key={l as string} style={{ textAlign:'center', background:SCHOOL_BG[s.id], borderRadius:8, padding:'10px 0' }}>
-                        <div style={{ fontSize:22, fontWeight:700, color:c as string, fontFamily:'IBM Plex Mono,monospace' }}>{v}</div>
-                        <div style={{ fontSize:10, color:'#a89f8c' }}>{l}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ display:'flex', gap:8, marginBottom:12 }}>
-                    {[['🌅 เช้า', hasMorn], ['🌇 บ่าย', hasAftn]].map(([l,ok])=>(
-                      <div key={l as string} style={{ flex:1, background:ok?'#e8f5e9':'#fde8e8', border:`1px solid ${ok?'#a5d6a7':'#ffcdd2'}`, borderRadius:7, padding:'7px', textAlign:'center', fontSize:12, fontWeight:600, color:ok?'#1b5e20':'#b71c1c' }}>
-                        {l as string} {ok?'✓':'ยังไม่รายงาน'}
-                      </div>
-                    ))}
-                  </div>
-                  {/* Latest reports */}
-                  {todayR.slice(0,2).map(r=><ReportCard key={r.id} rpt={r} users={allUsers}/>)}
+                <div style={{ background:todayIssues>0 ? 'linear-gradient(135deg, #d32f2f, #9a0007)' : 'linear-gradient(135deg, #2e7d32, #1b5e20)', borderRadius:16, padding:20, color:'#fff', boxShadow:todayIssues>0 ? '0 4px 20px rgba(211,47,47,0.3)' : '0 4px 20px rgba(46,125,50,0.2)' }}>
+                  <div style={{ fontSize:13, opacity:0.8, textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>สถานะเครือข่าย</div>
+                  <div style={{ fontSize:28, fontWeight:700, lineHeight:1.3 }}>{todayIssues>0 ? `⚠ ${todayIssues} ปัญหาด่วน` : '🟢 ปกติทั้งหมด'}</div>
+                </div>
+                <div style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:16, padding:20, boxShadow:'0 4px 15px rgba(0,0,0,0.03)' }}>
+                  <div style={{ fontSize:13, color:'#a89f8c', textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>ปัญหาด่วนในเดือนนี้</div>
+                  <div style={{ fontSize:36, fontWeight:700, color:'#252018', fontFamily:'IBM Plex Mono,monospace', lineHeight:1 }}>{monthIssues}</div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+
+              {/* 2. School Status Cards */}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))', gap:16 }}>
+                {allSchools.map(s => {
+                  const sRpts = todayRpts.filter(r => r.schoolId === s.id);
+                  const hasMorn = sRpts.some(r => r.shift === 'morning');
+                  const hasAftn = sRpts.some(r => r.shift === 'afternoon');
+                  const issues = sRpts.filter(r => !r.isNormal).length;
+                  const stColor = issues > 0 ? '#d32f2f' : (hasMorn || hasAftn ? '#2e7d32' : '#a89f8c');
+                  const stBg = issues > 0 ? '#fde8e8' : (hasMorn || hasAftn ? '#e8f5e9' : '#f3f0e8');
+
+                  return (
+                    <div key={s.id} style={{ background:'#fff', border:`1px solid ${stColor}40`, borderLeft:`4px solid ${stColor}`, borderRadius:12, padding:'16px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', boxShadow:issues>0?'0 0 15px rgba(211,47,47,0.15)':'none' }}>
+                      <div>
+                        <div style={{ fontSize:16, fontWeight:700, color:'#252018', marginBottom:4 }}>{s.name}</div>
+                        <div style={{ display:'flex', gap:8, fontSize:12, color:'#574f44' }}>
+                          <span style={{ opacity:hasMorn?1:0.4 }}>🌅 เช้า {hasMorn?'✓':'—'}</span>
+                          <span style={{ opacity:hasAftn?1:0.4 }}>🌇 บ่าย {hasAftn?'✓':'—'}</span>
+                        </div>
+                      </div>
+                      <div style={{ background:stBg, color:stColor, padding:'6px 14px', borderRadius:20, fontSize:13, fontWeight:700 }}>
+                        {issues > 0 ? `⚠ ${issues} ปัญหา` : (hasMorn || hasAftn ? '✓ ปกติ' : '⏳ รอรายงาน')}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))', gap:20 }}>
+                {/* 3. Trend Chart */}
+                <div style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:16, padding:20 }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:'#252018', marginBottom:20 }}>📈 สถิติการรายงานย้อนหลัง 7 วัน</div>
+                  <div style={{ display:'flex', alignItems:'flex-end', gap:10, height:180, paddingBottom:10 }}>
+                    {last7.map(d => {
+                      const count = allRpts.filter(r=>r.date===d).length;
+                      const thd = new Date(d);
+                      const ht = Math.max(5, (count / maxRep) * 150);
+                      return (
+                        <div key={d} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+                          <div style={{ width:'100%', maxWidth:40, height:ht, background:d===td?'#1e5c3b':'#e5e0d4', borderRadius:'6px 6px 0 0', position:'relative', transition:'all .3s' }}>
+                            <span style={{ position:'absolute', top:-20, left:'50%', transform:'translateX(-50%)', fontSize:11, fontWeight:700, color:'#574f44' }}>{count}</span>
+                          </div>
+                          <div style={{ fontSize:10, color:'#a89f8c', fontWeight:d===td?700:400 }}>{thd.getDate()}/{thd.getMonth()+1}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Live Activity Feed */}
+                <div style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:16, padding:20, display:'flex', flexDirection:'column' }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:'#252018', marginBottom:16 }}>⚡ ความเคลื่อนไหวล่าสุดวันนี้</div>
+                  <div style={{ flex:1, overflowY:'auto', maxHeight:250, paddingRight:10 }}>
+                    {todayRpts.length === 0 ? (
+                      <div style={{ textAlign:'center', color:'#a89f8c', padding:'30px 0', fontSize:13 }}>ยังไม่มีรายงานในวันนี้</div>
+                    ) : (
+                      todayRpts.sort((a,b)=>b.timestamp-a.timestamp).map(r => (
+                        <div key={r.id} style={{ display:'flex', gap:12, marginBottom:16 }}>
+                          <div style={{ display:'flex', flexDirection:'column', alignItems:'center' }}>
+                            <div style={{ width:10, height:10, borderRadius:'50%', background:r.isNormal?'#2e7d32':'#d32f2f', outline:r.isNormal?'3px solid #e8f5e9':'3px solid #fde8e8' }}/>
+                            <div style={{ width:2, background:'#f3f0e8', flex:1, margin:'4px 0' }}/>
+                          </div>
+                          <div style={{ flex:1, paddingBottom:8 }}>
+                            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:4 }}>
+                              <span style={{ fontSize:13, fontWeight:700, color:r.isNormal?'#252018':'#d32f2f' }}>{r.isNormal?'ส่งรายงานเวร':'แจ้งพบปัญหาเตือนภัย'}</span>
+                              <span style={{ fontSize:11, color:'#a89f8c', fontFamily:'IBM Plex Mono,monospace' }}>{r.time} น.</span>
+                            </div>
+                            <div style={{ fontSize:12, color:'#574f44', marginBottom:4 }}>{allSchools.find(s=>s.id===r.schoolId)?.shortName} · กะ{r.shift==='morning'?'เช้า':'บ่าย'} · โดย {allUsers.find(u=>u.id===r.reporterId)?.name || r.sign}</div>
+                            {!r.isNormal && (
+                              <div style={{ background:'#fff8e1', border:'1px solid #f5d06e', borderRadius:6, padding:'6px 10px', fontSize:11, color:'#8a6000', marginTop:4 }}>
+                                {r.areas.filter(a=>a.status==='issue').map(a=>a.area).join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Teacher: single school */}
         {!isDirector && (() => {
