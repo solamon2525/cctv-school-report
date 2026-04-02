@@ -72,7 +72,7 @@ export default function App() {
   const onAdminLogout = () => { setPage('dashboard'); };
 
   // Nav items based on role
-  const canAdmin = user.role==='admin'||user.role==='director';
+  const canAdmin = user.role==='admin';
 
   return (
     <div style={{ minHeight:'100vh', background:'#faf8f4', fontFamily:'Sarabun,sans-serif' }}>
