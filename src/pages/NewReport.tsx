@@ -88,9 +88,12 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
     const reports = load<DutyReport>(K.reports);
     const dup = reports.find(r =>
       r.schoolId === activeSchool && r.date === today() &&
-      r.shift === shift && r.reporterId === user.id
+      r.shift === shift
     );
-    if (dup && !confirm(`บันทึกรายงาน${shift==='morning'?'เช้า':'บ่าย'}วันนี้แล้ว\nบันทึกซ้ำหรือไม่?`)) return;
+    if (dup) {
+      toast(`กะ${shift==='morning'?'เช้า':'บ่าย'} ของวันนี้ถูกรายงานไปแล้ว!`, 'err');
+      return;
+    }
 
     const rpt: DutyReport = {
       id:'r'+Date.now(), schoolId:activeSchool, date:today(), shift,

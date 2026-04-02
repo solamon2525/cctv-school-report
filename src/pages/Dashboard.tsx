@@ -89,13 +89,8 @@ export default function Dashboard({ user, onNav, schoolId }: Props) {
     <div>
       <PageHeader
         title={isDirector ? 'ภาพรวมทั้งเครือข่าย' : allSchools.find(s=>s.id===schoolId)?.name||''}
-        subtitle={isDirector ? `ผู้อำนวยการ ${user.name.split(' ')[0]}` : new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}>
-        {!isDirector && (
-          <button onClick={() => onNav('new-report')} style={{ background:SCHOOL_C[schoolId]||'#1e5c3b', color:'#faf8f4', border:'none', borderRadius:8, padding:'9px 18px', fontSize:14, fontWeight:600, cursor:'pointer', fontFamily:'Sarabun,sans-serif' }}>
-            + บันทึกรายงานเวร
-          </button>
-        )}
-      </PageHeader>
+        subtitle={isDirector ? `ผู้อำนวยการ ${user.name.split(' ')[0]}` : new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+      />
 
       <div style={{ padding:24 }}>
         {/* Director: side-by-side school cards */}
@@ -166,7 +161,7 @@ export default function Dashboard({ user, onNav, schoolId }: Props) {
                     </div>
                     {done
                       ? <span style={{ background:'#e8f5e9', color:'#1b5e20', fontSize:12, fontWeight:700, padding:'4px 12px', borderRadius:20 }}>✓ รายงานแล้ว</span>
-                      : <button onClick={() => onNav('new-report')} style={{ background:sc, color:'#faf8f4', border:'none', borderRadius:8, padding:'7px 14px', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Sarabun,sans-serif' }}>รายงาน</button>
+                      : <span style={{ background:'#faf8f4', color:'#a89f8c', fontSize:12, fontWeight:600, padding:'4px 12px', borderRadius:20 }}>⏳ ยังไม่รายงาน</span>
                     }
                   </div>
                 ))}
