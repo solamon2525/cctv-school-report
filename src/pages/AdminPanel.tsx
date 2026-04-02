@@ -226,8 +226,7 @@ function DatabaseMgmt() {
         if (!confirm('ข้อมูลเก่าบน Firebase จะถูกแทนที่ด้วยไฟล์นี้\nคุณแน่ใจหรือไม่?')) return;
         toast('กำลังอัปโหลดข้อมูล...', 'ok');
         await importDatabase(json);
-        toast('นำเข้าข้อมูลสำเร็จ!', 'ok');
-        setTimeout(() => window.location.reload(), 1000);
+        toast('นำเข้าข้อมูลสำเร็จ! ระบบจะซิงก์ข้อมูลอัตโนมัติ ✓', 'ok');
       } catch (err) {
         toast('ไฟล์ไม่ถูกต้อง หรือนำเข้าล้มเหลว', 'err');
       }
@@ -256,8 +255,7 @@ function DatabaseMgmt() {
     if (clrUsers) colsToClear.push(K.users);
 
     await clearAllDatabase(colsToClear);
-    toast('ล้างข้อมูลเรียบร้อยแล้ว', 'ok');
-    setTimeout(() => window.location.reload(), 1000);
+    toast('ล้างข้อมูลเรียบร้อยแล้ว ✓ ระบบจะอัปเดตอัตโนมัติ', 'ok');
   };
 
   return (

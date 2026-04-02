@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { load, save, K, DutyReport, AreaReport, AppUser, School, DutySchedule,
   AREAS_KP, AREAS_HL, Shift, today, nowTime, fmtDate } from '../lib/store';
 import { addReport } from '../lib/firebase';
@@ -21,6 +21,12 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   const [shift,    setShift]    = useState<Shift>(getDefaultShift);
   const [time,     setTime]     = useState(nowTime());
   const [areas,    setAreas]    = useState<AreaReport[]>(() => areas0.map(a=>({area:a,status:'ok',note:''})));
+
+  // Bug #8: auto-update shift every minute in case form is left open past noon
+  useEffect(() => {
+    const id = setInterval(() => setShift(getDefaultShift()), 60_000);
+    return () => clearInterval(id);
+  }, []);
   const [note,     setNote]     = useState('');
   const [sign,     setSign]     = useState(user.name);
   const [isNormal, setIsNormal] = useState(true);
@@ -36,6 +42,9 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
     setActiveSchool(sid);
     const a0 = sid === 's1' ? AREAS_KP : AREAS_HL;
     setAreas(a0.map(a => ({ area:a, status:'ok', note:'' })));
+    setShift(getDefaultShift()); // reset shift ตามเวลาปัจจุบัน
+    setIsNormal(true);
+    setNote('');
     setPhotos([]); setSelCam('');
   };
 
