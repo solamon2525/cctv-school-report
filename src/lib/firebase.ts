@@ -136,8 +136,7 @@ export async function ensureAuth() {
 }
 
 // ── Database Backup & Clear ──
-export async function clearAllDatabase() {
-  const collections = [COL.reports, COL.duty, COL.users, COL.cameras, COL.schools];
+export async function clearAllDatabase(collections: string[] = [COL.reports, COL.duty, COL.users, COL.cameras, COL.schools]) {
   for (const c of collections) {
     const snap = await getDocs(collection(db, c));
     await Promise.all(snap.docs.map(d => deleteDoc(doc(db, c, d.id))));

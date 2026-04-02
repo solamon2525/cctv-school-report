@@ -194,6 +194,10 @@ function CamMgmt({ user }: { user:AppUser }) {
 }
 
 function DatabaseMgmt() {
+  const [clrReports, setClrReports] = useState(true);
+  const [clrDuty, setClrDuty] = useState(false);
+  const [clrUsers, setClrUsers] = useState(false);
+
   const handleExport = () => {
     const data = {
       reports: load(K.reports),
@@ -233,14 +237,26 @@ function DatabaseMgmt() {
   };
 
   const handleClear = async () => {
-    const code = prompt('หากต้องการล้างข้อมูลทั้งหมด (รายงาน, ครู, กล้อง)\nพิมพ์คำว่า "CONFIRM" เพื่อยืนยัน');
+    if (!clrReports && !clrDuty && !clrUsers) {
+      toast('โปรดเลือกข้อมูลที่ต้องการลบ', 'err');
+      return;
+    }
+
+    const code = prompt('พิมพ์คำว่า "CONFIRM" เพื่อยืนยันการล้างข้อมูลที่เลือก');
     if (code !== 'CONFIRM') {
       if (code !== null) toast('ยกเลิกการล้างข้อมูล', 'warn');
       return;
     }
-    toast('กำลังลบข้อมูลทั้งหมด...', 'warn');
-    await clearAllDatabase();
-    toast('ล้างฐานข้อมูลแล้ว', 'ok');
+    toast('กำลังลบข้อมูล...', 'warn');
+    
+    // Determine which collections to clear
+    const colsToClear = [];
+    if (clrReports) colsToClear.push(K.reports);
+    if (clrDuty) colsToClear.push(K.duty);
+    if (clrUsers) colsToClear.push(K.users);
+
+    await clearAllDatabase(colsToClear);
+    toast('ล้างข้อมูลเรียบร้อยแล้ว', 'ok');
     setTimeout(() => window.location.reload(), 1000);
   };
 
@@ -266,10 +282,21 @@ function DatabaseMgmt() {
       </div>
 
       <div style={{ background: '#fde8e8', border: '1px solid rgba(183,28,28,.2)', borderRadius: 8, padding: 16 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#b71c1c', marginBottom: 4 }}>🗑️ ล้างฐานข้อมูล (Factory Reset)</div>
-        <div style={{ fontSize: 12, color: '#b71c1c', marginBottom: 12, opacity: 0.8 }}>ลบข้อมูลรายงาน, ครูเวร, รายชื่อโรงเรียน และกล้องทั้งหมดแบบถาวร</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#b71c1c', marginBottom: 4 }}>🗑️ ล้างฐานข้อมูล (Reset)</div>
+        <div style={{ fontSize: 13, color: '#b71c1c', marginBottom: 8, opacity: 0.9 }}>เลือกเฉพาะข้อมูลที่ต้องการลบ (รายชื่อโรงเรียนและกล้องจะไม่ถูกลบ)</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#b71c1c' }}>
+            <input type="checkbox" checked={clrReports} onChange={e=>setClrReports(e.target.checked)}/> ข้อมูลรายงานประจำวัน (เช้า-บ่าย) ทั้ง 2 โรงเรียน
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#b71c1c' }}>
+            <input type="checkbox" checked={clrDuty} onChange={e=>setClrDuty(e.target.checked)}/> ตารางกำหนดการเวร (ลบทิ้งทั้งหมด)
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#b71c1c' }}>
+            <input type="checkbox" checked={clrUsers} onChange={e=>setClrUsers(e.target.checked)}/> รายชื่อครูเวร (ลบทิ้งทั้งหมด)
+          </label>
+        </div>
         <button onClick={handleClear} style={{ background: '#b71c1c', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Sarabun,sans-serif' }}>
-          ลบข้อมูลทั้งหมด!
+          ลบข้อมูลที่เลือก!
         </button>
       </div>
     </div>
