@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { load, save, K, AppUser, School, Camera, DutySchedule, DutyReport, today, fmtDate, Shift, clearAdminSession, getSchoolLogo, setSchoolLogo } from '../lib/store';
 import { toast } from '../lib/toast';
 import PageHeader from '../components/PageHeader';
+import Cameras from './Cameras';
 
 const inp=(s?:React.CSSProperties):React.CSSProperties=>({background:'#fff',border:'1px solid #e5e0d4',borderRadius:8,padding:'9px 12px',fontFamily:'Sarabun,sans-serif',fontSize:14,color:'#252018',outline:'none',width:'100%',...s});
 const ROLE_LABEL:Record<string,string>={director:'ผู้อำนวยการ',admin:'ครู (Admin)',teacher:'ครู'};
@@ -171,6 +172,26 @@ function DutyMgmt() {
   );
 }
 
+function CamMgmt({ user }: { user:AppUser }) {
+  const [selSchool,setSelSchool]=useState(user.schoolId || 's1');
+  const schools = load<School>(K.schools);
+  return (
+    <div>
+      {user.role === 'director' && (
+        <div style={{marginBottom:16, background:'#fff', border:'1px solid #e5e0d4', borderRadius:12, padding:20}}>
+          <label style={{display:'block',fontSize:11,fontWeight:600,color:'#a89f8c',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:4}}>เลือกโรงเรียนเพื่อจัดการกล้อง</label>
+          <select value={selSchool} onChange={e=>setSelSchool(e.target.value)} style={inp()}>
+            {schools.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+      )}
+      <div style={{background:'#fff',border:'1px solid #e5e0d4',borderRadius:12,overflow:'hidden'}}>
+        <Cameras schoolId={selSchool} />
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:()=>void }) {
   const [sub,setSub]=useState<'duty'|'users'|'cameras'>('duty');
   const handleLogout=()=>{ clearAdminSession(); toast('ออกจากระบบ Admin','warn'); onLogout(); };
@@ -188,7 +209,7 @@ export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:
       </div>
       <div style={{padding:24}}>
         {sub==='duty'&&<DutyMgmt/>}
-        {sub==='cameras'&&<CamMgmt/>}
+        {sub==='cameras'&&<CamMgmt user={user}/>}
         {sub==='users'&&<UserMgmt/>}
       </div>
     </div>

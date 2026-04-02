@@ -25,7 +25,11 @@ export type Shift    = 'morning' | 'afternoon';
 export type UserRole = 'director' | 'admin' | 'teacher';
 
 export interface School { id: string; name: string; shortName: string; logoUrl?: string; }
-export interface Camera { id: string; schoolId: string; name: string; location: string; status: string; }
+export type CamStatus = 'ok' | 'warning' | 'error' | 'offline';
+export type CamZone   = 'exterior' | 'interior' | 'corridor' | 'gate';
+export type Urgency   = 'none' | 'low' | 'medium' | 'high';
+
+export interface Camera { id: string; schoolId: string; name: string; location: string; status: CamStatus; zone: CamZone; }
 export interface AppUser {
   id: string; name: string; role: UserRole;
   schoolId: string | null; // null = director (both schools)
@@ -59,6 +63,15 @@ export const AREAS_HL = [
   'ห้องเรียน','อาคารเรียน','ห้องน้ำ',
   'สนามกีฬา','ประตูทางเข้า','บริเวณรอบโรงเรียน',
 ];
+
+export const stLbl: Record<string,string> = { ok:'ปกติ', warning:'ผิดปกติ', error:'ไม่มีสัญญาณ', offline:'ปิดใช้งาน' };
+export const stClass: Record<string,string> = { ok:'st-ok', warning:'st-warn', error:'st-err', offline:'st-off' };
+export const stBorderColor: Record<string,string> = { ok:'#2e7d32', warning:'#f5d06e', error:'#b71c1c', offline:'#e5e0d4' };
+
+export const zoneLbl: Record<string,string> = { exterior:'ภายนอกอาคาร', interior:'ภายในอาคาร', corridor:'โถงทางเดิน', gate:'ประตูทางเข้า' };
+
+export const urgLbl: Record<string,string> = { none:'ปกติ', low:'ต่ำ', medium:'ปานกลาง', high:'สูง' };
+export const urgClass: Record<string,string> = { none:'urg-none', low:'urg-low', medium:'urg-med', high:'urg-high' };
 
 export const fmtDate = (d: string) => {
   if (!d) return '-';
@@ -141,18 +154,18 @@ export function seedData() {
   ];
 
   // Cameras (all OK, display only)
-  const cams = [
-    {id:'KP-01',schoolId:'s1',name:'ประตูทางเข้าหลัก',location:'ประตูหน้า',status:'ok'},
-    {id:'KP-02',schoolId:'s1',name:'ลานกิจกรรม',location:'หน้าอาคาร',status:'ok'},
-    {id:'KP-03',schoolId:'s1',name:'อาคาร 1',location:'อาคาร 1',status:'ok'},
-    {id:'KP-04',schoolId:'s1',name:'โรงอาหาร',location:'โรงอาหาร',status:'ok'},
-    {id:'KP-05',schoolId:'s1',name:'สนามกีฬา',location:'สนามหน้า',status:'ok'},
-    {id:'KP-06',schoolId:'s1',name:'ลานจอดรถ',location:'ลานจอดรถ',status:'ok'},
-    {id:'KP-07',schoolId:'s1',name:'ประตูหลัง',location:'ประตูหลัง',status:'ok'},
-    {id:'KP-08',schoolId:'s1',name:'สำนักงาน',location:'ห้องสำนักงาน',status:'ok'},
-    {id:'HL-01',schoolId:'s2',name:'ประตูทางเข้าหลัก',location:'ประตูหน้า',status:'ok'},
-    {id:'HL-02',schoolId:'s2',name:'อาคารเรียน',location:'อาคารเรียน',status:'ok'},
-    {id:'HL-03',schoolId:'s2',name:'สนามกีฬา',location:'สนามหน้า',status:'ok'},
+  const cams: Camera[] = [
+    {id:'KP-01',schoolId:'s1',name:'ประตูทางเข้าหลัก',location:'ประตูหน้า',zone:'gate',status:'ok'},
+    {id:'KP-02',schoolId:'s1',name:'ลานกิจกรรม',location:'หน้าอาคาร',zone:'exterior',status:'ok'},
+    {id:'KP-03',schoolId:'s1',name:'อาคาร 1',location:'อาคาร 1',zone:'interior',status:'ok'},
+    {id:'KP-04',schoolId:'s1',name:'โรงอาหาร',location:'โรงอาหาร',zone:'interior',status:'ok'},
+    {id:'KP-05',schoolId:'s1',name:'สนามกีฬา',location:'สนามหน้า',zone:'exterior',status:'ok'},
+    {id:'KP-06',schoolId:'s1',name:'ลานจอดรถ',location:'ลานจอดรถ',zone:'exterior',status:'ok'},
+    {id:'KP-07',schoolId:'s1',name:'ประตูหลัง',location:'ประตูหลัง',zone:'gate',status:'ok'},
+    {id:'KP-08',schoolId:'s1',name:'สำนักงาน',location:'ห้องสำนักงาน',zone:'interior',status:'ok'},
+    {id:'HL-01',schoolId:'s2',name:'ประตูทางเข้าหลัก',location:'ประตูหน้า',zone:'gate',status:'ok'},
+    {id:'HL-02',schoolId:'s2',name:'อาคารเรียน',location:'อาคารเรียน',zone:'interior',status:'ok'},
+    {id:'HL-03',schoolId:'s2',name:'สนามกีฬา',location:'สนามหน้า',zone:'exterior',status:'ok'},
   ];
 
   save(K.schools, schools);
