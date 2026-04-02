@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { load, save, K, AppUser, School, Camera, DutySchedule, DutyReport, today, fmtDate, Shift, clearAdminSession, getSchoolLogo, setSchoolLogo } from '../lib/store';
+import { saveUser, deleteUser, saveDuty, deleteDuty } from '../lib/firebase';
 import { toast } from '../lib/toast';
 import PageHeader from '../components/PageHeader';
 import Cameras from './Cameras';
@@ -17,23 +18,24 @@ function UserMgmt() {
   const save_=()=>{
     if(!name.trim()){toast('กรุณากรอกชื่อ','err');return;}
     if(pin&&(pin.length!==4||!/^\d{4}$/.test(pin))){toast('PIN ต้องเป็นตัวเลข 4 หลัก','err');return;}
-    const all=load<AppUser>(K.users);
+    let newUser: AppUser;
     if(editId){
-      const idx=all.findIndex(u=>u.id===editId);
-      if(idx>=0) all[idx]={...all[idx],name:name.trim(),role,schoolId:schoolId||null,pin:pin||all[idx].pin};
+      const all=load<AppUser>(K.users);
+      const cur=all.find(u=>u.id===editId);
+      newUser={...cur!,name:name.trim(),role,schoolId:schoolId||null,pin:pin||cur!.pin};
     } else {
       if(!pin){toast('กรุณากำหนด PIN','err');return;}
-      all.push({id:'u'+Date.now(),name:name.trim(),role,schoolId,pin});
+      newUser={id:'u'+Date.now(),name:name.trim(),role,schoolId:schoolId||null,pin};
     }
-    save(K.users,all); toast(editId?'แก้ไขแล้ว':'เพิ่มแล้ว','ok');
-    setName('');setPin('');setEId(null); window.location.reload();
+    saveUser(newUser); toast(editId?'แก้ไขแล้ว':'เพิ่มแล้ว','ok');
+    setName('');setPin('');setEId(null); setTimeout(()=>window.location.reload(), 500);
   };
   const edit=(u:AppUser)=>{setEId(u.id);setName(u.name);setRole(u.role==='director'?'teacher':u.role as any);setSId(u.schoolId||'s1');setPin('');};
   const del=(id:string)=>{
     if(load<AppUser>(K.users).find(u=>u.id===id)?.role==='director'){toast('ไม่สามารถลบผู้อำนวยการได้','err');return;}
     if(!confirm('ลบผู้ใช้นี้?'))return;
-    save(K.users,load<AppUser>(K.users).filter(u=>u.id!==id));
-    toast('ลบแล้ว','warn'); window.location.reload();
+    deleteUser(id);
+    toast('ลบแล้ว','warn'); setTimeout(()=>window.location.reload(), 500);
   };
   const reports=load<DutyReport>(K.reports);
 
@@ -95,13 +97,12 @@ function DutyMgmt() {
   const getDuty=(sid:string,date:string,sh:Shift)=>duties.find(d=>d.schoolId===sid&&d.date===date&&d.shift===sh);
   const assign=()=>{
     if(!selUser){toast('กรุณาเลือกครูเวร','err');return;}
-    const all=load<DutySchedule>(K.duty);
-    const idx=all.findIndex(d=>d.schoolId===selSchool&&d.date===selDate&&d.shift===selShift);
     const entry:DutySchedule={id:'duty-'+Date.now(),schoolId:selSchool,date:selDate,shift:selShift,teacherId:selUser,timestamp:Date.now()};
-    if(idx>=0)all[idx]=entry;else all.push(entry);
-    save(K.duty,all); toast(`กำหนดเวร ${users.find(u=>u.id===selUser)?.name?.split(' ')[0]} สำเร็จ`,'ok'); window.location.reload();
+    const exist=getDuty(selSchool,selDate,selShift);
+    if(exist) entry.id=exist.id;
+    saveDuty(entry); toast(`กำหนดเวร ${users.find(u=>u.id===selUser)?.name?.split(' ')[0]} สำเร็จ`,'ok'); setTimeout(()=>window.location.reload(), 500);
   };
-  const rem=(id:string)=>{save(K.duty,load<DutySchedule>(K.duty).filter(d=>d.id!==id));toast('ยกเลิกแล้ว','warn');window.location.reload();};
+  const rem=(id:string)=>{deleteDuty(id);toast('ยกเลิกแล้ว','warn');setTimeout(()=>window.location.reload(), 500);};
   const dayNames=['อา','จ','อ','พ','พฤ','ศ','ส'];
 
   return(

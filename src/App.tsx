@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { seedData, load, loadVal, saveVal, K, AppUser, School, getSchoolLogo } from './lib/store';
+import React, { useState, useEffect } from 'react';
+import { seedData, load, loadVal, saveVal, save, K, AppUser, School, getSchoolLogo } from './lib/store';
+import { db, COL } from './lib/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import LoginScreen from './components/LoginScreen';
 import Dashboard from './pages/Dashboard';
 import NewReport from './pages/NewReport';
@@ -18,6 +20,18 @@ export default function App() {
   });
   const [page, setPage]   = useState<Page>('dashboard');
   const [dirty, setDirty] = useState(false);
+  const [syncTick, setSyncTick] = useState(0);
+
+  useEffect(() => {
+    const unsubs = [
+      onSnapshot(collection(db, COL.schools), snap => { save(K.schools, snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
+      onSnapshot(collection(db, COL.users), snap => { save(K.users, snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
+      onSnapshot(query(collection(db, COL.reports), orderBy('timestamp', 'desc')), snap => { save(K.reports, snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
+      onSnapshot(collection(db, COL.cameras), snap => { save(K.cams, snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); }),
+      onSnapshot(query(collection(db, COL.duty), orderBy('date', 'asc')), snap => { save(K.duty, snap.docs.map(d=>({id:d.id, ...d.data()}))); setSyncTick(t=>t+1); })
+    ];
+    return () => unsubs.forEach(u => u());
+  }, []);
 
   if (!user) return <LoginScreen onLogin={u => { setUser(u); setPage('dashboard'); }}/>;
 

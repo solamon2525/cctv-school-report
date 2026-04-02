@@ -90,6 +90,14 @@ export async function updateCamera(camId: string, data: Partial<any>) {
   await updateDoc(doc(db, COL.cameras, camId), data);
 }
 
+export async function saveCamera(camera: any) {
+  await setDoc(doc(db, COL.cameras, camera.id), camera);
+}
+
+export async function deleteCamera(camId: string) {
+  await deleteDoc(doc(db, COL.cameras, camId));
+}
+
 // Duty schedule
 export async function getDuty(schoolId?: string) {
   let q = schoolId

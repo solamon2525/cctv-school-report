@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { load, save, K, Camera, CamStatus, CamZone, School, zoneLbl, stLbl, stBorderColor } from '../lib/store';
+import { saveCamera, deleteCamera, updateCamera } from '../lib/firebase';
 import { CamBadge } from '../components/StatusBadge';
 import PageHeader from '../components/PageHeader';
 import { toast } from '../lib/toast';
@@ -10,13 +11,13 @@ export default function Cameras({ schoolId }: { schoolId:string }) {
   const cams = load<Camera>(K.cams).filter(c => c.schoolId === schoolId);
   const ok=cams.filter(c=>c.status==='ok').length;
 
-  const setSt = (id:string, status:CamStatus) => { const cs=load<Camera>(K.cams); const fx=cs.find(c=>c.id===id); if(fx) fx.status=status; save(K.cams,cs); toast(`${id}: ${stLbl[status]}`,'ok'); window.location.reload(); };
-  const del = (id:string) => { if(!confirm('ลบกล้องนี้?'))return; save(K.cams,load<Camera>(K.cams).filter(c=>c.id!==id)); toast('ลบกล้องแล้ว','warn'); window.location.reload(); };
-  const add = () => {
+  const setSt = (id:string, status:CamStatus) => { updateCamera(id, {status}); toast(`${id}: ${stLbl[status]}`,'ok'); setTimeout(()=>window.location.reload(), 500); };
+  const del = (id:string) => { if(!confirm('ลบกล้องนี้?'))return; deleteCamera(id); toast('ลบกล้องแล้ว','warn'); setTimeout(()=>window.location.reload(), 500); };
+  const doAdd = () => {
     if(!newId||!newName){toast('กรุณากรอกรหัสและชื่อกล้อง','err');return;}
     if(cams.find(c=>c.id===newId)){toast('รหัสนี้มีอยู่แล้ว','err');return;}
-  const add=()=>{if(!newId||!newName){toast('กรุณากรอกรหัสและชื่อกล้อง','err');return;}const allCams=load<Camera>(K.cams);if(allCams.find(c=>c.id===newId)){toast('รหัสนี้มีอยู่แล้ว','err');return;}save(K.cams,[...allCams,{id:newId,schoolId,name:newName,location:newLoc||'—',zone:newZone,status:'ok' as CamStatus}]);toast(`เพิ่ม ${newId} สำเร็จ`,'ok');setShowAdd(false);[setNewId,setNewName,setNewLoc].forEach(s=>s(''));window.location.reload();};
-    toast(`เพิ่ม ${newId} สำเร็จ`,'ok'); setShowAdd(false); [setNewId,setNewName,setNewLoc].forEach(s=>s('')); window.location.reload();
+    saveCamera({id:newId,schoolId,name:newName,location:newLoc||'—',zone:newZone,status:'ok'});
+    toast(`เพิ่ม ${newId} สำเร็จ`,'ok'); setShowAdd(false); [setNewId,setNewName,setNewLoc].forEach(s=>s('')); setTimeout(()=>window.location.reload(), 500);
   };
   const inp=(s?:React.CSSProperties):React.CSSProperties=>({background:'#fff',border:'1px solid var(--neutral-200)',borderRadius:8,padding:'9px 12px',fontFamily:'Sarabun,sans-serif',fontSize:14,color:'var(--neutral-700)',outline:'none',width:'100%',...s});
 
@@ -57,7 +58,7 @@ export default function Cameras({ schoolId }: { schoolId:string }) {
             </div>
             <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
               <button onClick={()=>setShowAdd(false)} style={{background:'#fff',border:'1px solid var(--neutral-200)',borderRadius:8,padding:'9px 18px',fontSize:14,cursor:'pointer',fontFamily:'Sarabun,sans-serif',color:'var(--neutral-600)'}}>ยกเลิก</button>
-              <button onClick={add} style={{background:'var(--brand-600)',color:'#faf8f4',border:'none',borderRadius:8,padding:'9px 18px',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'Sarabun,sans-serif'}}>บันทึก</button>
+              <button onClick={doAdd} style={{background:'var(--brand-600)',color:'#faf8f4',border:'none',borderRadius:8,padding:'9px 18px',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'Sarabun,sans-serif'}}>บันทึก</button>
             </div>
           </div>
         </div>

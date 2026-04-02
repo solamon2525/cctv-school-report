@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { load, save, K, DutyReport, AreaReport, AppUser, School, DutySchedule,
   AREAS_KP, AREAS_HL, Shift, today, nowTime, fmtDate } from '../lib/store';
+import { addReport } from '../lib/firebase';
 import { toast } from '../lib/toast';
 import PageHeader from '../components/PageHeader';
 
@@ -88,8 +89,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
       reporterId:user.id, time, isNormal, areas, note:note.trim(),
       sign:sign.trim(), photos, timestamp:Date.now(),
     };
-    reports.push(rpt);
-    save(K.reports, reports);
+    addReport(rpt);
     toast('บันทึกรายงานสำเร็จ ✓', 'ok');
     setTimeout(() => onNav('dashboard'), 900);
   };

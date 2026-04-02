@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { load, save, K, DutyReport, School, AppUser, fmtDate, today } from '../lib/store';
+import { deleteReport } from '../lib/firebase';
 import { toast } from '../lib/toast';
 import PageHeader from '../components/PageHeader';
 
@@ -25,8 +26,8 @@ export default function History({ schoolId, user }: Props) {
 
   const del = (id:string) => {
     if (!confirm('ลบรายงานนี้?')) return;
-    save(K.reports, load<DutyReport>(K.reports).filter(r=>r.id!==id));
-    toast('ลบรายงานแล้ว','warn'); window.location.reload();
+    deleteReport(id);
+    toast('ลบรายงานแล้ว','warn'); setTimeout(()=>window.location.reload(), 500);
   };
 
   const inp = (s?:React.CSSProperties):React.CSSProperties => ({background:'#fff',border:'1px solid #e5e0d4',borderRadius:7,padding:'8px 11px',fontFamily:'Sarabun,sans-serif',fontSize:14,color:'#252018',outline:'none',...s});
