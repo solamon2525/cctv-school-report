@@ -7,8 +7,9 @@ import Dashboard from './pages/Dashboard';
 import NewReport from './pages/NewReport';
 import History from './pages/History';
 import AdminPanel from './pages/AdminPanel';
+import DirectorFeed from './pages/DirectorFeed';
 
-type Page = 'dashboard'|'new-report'|'history'|'admin';
+type Page = 'dashboard'|'new-report'|'history'|'admin'|'director-feed';
 
 seedData();
 
@@ -80,7 +81,7 @@ export default function App() {
         <div style={{ display:'flex', gap:2, flex:1, overflowX:'auto', minWidth:0 }}>
           {([
             ['dashboard','◫','แดชบอร์ด'],
-            ['new-report','✎','บันทึกรายงาน'],
+            user.role === 'director' ? ['director-feed','🖼','สมุดรายงาน'] : ['new-report','✎','บันทึกรายงาน'],
             ['history','≡','ประวัติ'],
             ...(canAdmin?[['admin','⚙','Admin']] as any:[]),
           ] as [Page,string,string][]).map(([p,ic,lb])=>(
@@ -110,6 +111,7 @@ export default function App() {
       {/* Pages */}
       <div style={{ minHeight:'calc(100vh - 52px)' }}>
         {page==='dashboard'  && <Dashboard key={syncTick} user={user} onNav={onNav} schoolId={schoolId}/>}
+        {page==='director-feed' && <DirectorFeed user={user} />}
         {page==='new-report' && <NewReport user={user} onNav={onNav} schoolId={user.schoolId||schoolId}/>}
         {page==='history'    && <History   key={syncTick} user={user} schoolId={schoolId}/>}
         {page==='admin'      && canAdmin && <AdminPanel key={syncTick} user={user} onLogout={onAdminLogout}/>}

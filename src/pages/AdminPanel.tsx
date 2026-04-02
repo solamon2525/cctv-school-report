@@ -178,14 +178,12 @@ function CamMgmt({ user }: { user:AppUser }) {
   const schools = load<School>(K.schools);
   return (
     <div>
-      {user.role === 'director' && (
-        <div style={{marginBottom:16, background:'#fff', border:'1px solid #e5e0d4', borderRadius:12, padding:20}}>
-          <label style={{display:'block',fontSize:11,fontWeight:600,color:'#a89f8c',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:4}}>เลือกโรงเรียนเพื่อจัดการกล้อง</label>
-          <select value={selSchool} onChange={e=>setSelSchool(e.target.value)} style={inp()}>
-            {schools.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </div>
-      )}
+      <div style={{marginBottom:16, background:'#fff', border:'1px solid #e5e0d4', borderRadius:12, padding:20}}>
+        <label style={{display:'block',fontSize:11,fontWeight:600,color:'#a89f8c',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:4}}>เลือกโรงเรียนเพื่อจัดการกล้อง</label>
+        <select value={selSchool} onChange={e=>setSelSchool(e.target.value)} style={inp()}>
+          {schools.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+      </div>
       <div style={{background:'#fff',border:'1px solid #e5e0d4',borderRadius:12,overflow:'hidden'}}>
         <Cameras schoolId={selSchool} />
       </div>
