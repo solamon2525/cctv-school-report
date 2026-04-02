@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-50:#f0f7f2; --brand-100:#d8eede; --brand-200:#b3dcc0;
+  --brand-300:#7fc29a; --brand-400:#4fa374; --brand-500:#2d7a52;
+  --brand-600:#1e5c3b; --brand-700:#174830; --brand-800:#0f3220;
+  --gold-400:#d4a843; --gold-500:#b8891a; --gold-600:#9a6e0f;
+  --neutral-0:#faf8f4; --neutral-50:#f3f0e8; --neutral-100:#e5e0d4;
+  --neutral-200:#ccc5b4; --neutral-300:#a89f8c; --neutral-400:#7d7668;
+  --neutral-500:#574f44; --neutral-600:#3a3530; --neutral-700:#252018;
+  --ok:#2e7d32; --ok-bg:#e8f5e9;
+  --warn:#c4891a; --warn-bg:#fef3dc;
+  --err:#b71c1c; --err-bg:#fde8e8;
+  --info:#1565c0; --info-bg:#e3eeff;
+  --background:var(--neutral-0); --foreground:var(--neutral-700);
+  --card:#ffffff; --card-foreground:var(--neutral-700);
+  --primary:var(--brand-600); --primary-foreground:#faf8f4;
+  --secondary:var(--neutral-50); --secondary-foreground:var(--neutral-600);
+  --muted:var(--neutral-50); --muted-foreground:var(--neutral-400);
+  --accent:var(--brand-50); --accent-foreground:var(--brand-700);
+  --border:var(--neutral-100); --input:var(--neutral-100);
+  --ring:var(--brand-400); --radius:0.5rem;
+}
+*{box-sizing:border-box;}
+body{font-family:'Sarabun',sans-serif;background:var(--neutral-0);color:var(--neutral-700);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--neutral-50);}
+::-webkit-scrollbar-thumb{background:var(--neutral-200);border-radius:3px;}
+.s-ok{background:var(--ok-bg);color:var(--ok);}
+.s-warn{background:var(--warn-bg);color:var(--warn);}
+.s-err{background:var(--err-bg);color:var(--err);}
+.s-off{background:var(--neutral-50);color:var(--neutral-400);}
+.s-morning{background:#fff8e1;color:#8a6000;}
+.s-afternoon{background:#e8f0ff;color:#1a3a8a;}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.25}}
+.live-dot{animation:pulse-dot 2s infinite;}
+@keyframes toast-in{from{transform:translateY(10px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.toast-in{animation:toast-in .2s ease;}
+@media print{.no-print{display:none!important;}main{margin-left:0!important;}}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.parcel-cache/
+bundle.html
+*.local
+.env
+.env.local
+.env.production
+.DS_Store
+*.log
