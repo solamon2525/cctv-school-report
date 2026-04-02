@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { load, save, K, AppUser, School, Camera, DutySchedule, DutyReport, today, fmtDate, Shift, clearAdminSession, getSchoolLogo, setSchoolLogo } from '../lib/store';
-import { saveUser, deleteUser, saveDuty, deleteDuty } from '../lib/firebase';
+import { saveUser, deleteUser, saveDuty, deleteDuty, clearAllDatabase, importDatabase } from '../lib/firebase';
 import { toast } from '../lib/toast';
 import PageHeader from '../components/PageHeader';
 import Cameras from './Cameras';
@@ -40,8 +40,8 @@ function UserMgmt() {
   const reports=load<DutyReport>(K.reports);
 
   return(
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1.6fr',gap:20}}>
-      <div style={{background:'#fff',border:'1px solid #e5e0d4',borderRadius:12,padding:20}}>
+    <div style={{display:'flex',flexWrap:'wrap',gap:20}}>
+      <div style={{flex:'1 1 300px',background:'#fff',border:'1px solid #e5e0d4',borderRadius:12,padding:20}}>
         <div style={{fontSize:14,fontWeight:700,color:'#252018',marginBottom:16}}>{editId?'✎ แก้ไขผู้ใช้':'+ เพิ่มครู/ผู้ใช้'}</div>
         <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:600,color:'#a89f8c',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:5}}>ชื่อ-นามสกุล *</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="เช่น นายณัฐพงศ์ สิงห์ชมภู" style={inp()}/></div>
         <div style={{marginBottom:14}}><label style={{display:'block',fontSize:11,fontWeight:600,color:'#a89f8c',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:5}}>บทบาท</label>
@@ -62,7 +62,7 @@ function UserMgmt() {
           <button onClick={save_} style={{flex:1,background:'#1e5c3b',color:'#faf8f4',border:'none',borderRadius:8,padding:10,fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'Sarabun,sans-serif'}}>{editId?'บันทึก':'เพิ่มผู้ใช้'}</button>
         </div>
       </div>
-      <div style={{background:'#fff',border:'1px solid #e5e0d4',borderRadius:12,padding:20}}>
+      <div style={{flex:'1.6 1 400px',background:'#fff',border:'1px solid #e5e0d4',borderRadius:12,padding:20}}>
         <div style={{fontSize:14,fontWeight:700,color:'#252018',marginBottom:16}}>ผู้ใช้งานทั้งหมด ({users.length} คน)</div>
         {users.map((u,i)=>{
           const cnt=reports.filter(r=>r.reporterId===u.id).length;
@@ -106,8 +106,8 @@ function DutyMgmt() {
   const dayNames=['อา','จ','อ','พ','พฤ','ศ','ส'];
 
   return(
-    <div style={{display:'grid',gridTemplateColumns:'290px 1fr',gap:20}}>
-      <div style={{background:'#fff',border:'1px solid #e5e0d4',borderRadius:12,padding:20}}>
+    <div style={{display:'flex',flexWrap:'wrap',gap:20}}>
+      <div style={{flex:'1 1 290px',background:'#fff',border:'1px solid #e5e0d4',borderRadius:12,padding:20}}>
         <div style={{fontSize:14,fontWeight:700,color:'#252018',marginBottom:16}}>📋 มอบหมายครูเวร</div>
         <div style={{marginBottom:12}}><label style={{display:'block',fontSize:11,fontWeight:600,color:'#a89f8c',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:4}}>โรงเรียน</label>
           <select value={selSchool} onChange={e=>setSelSchool(e.target.value)} style={inp()}>
@@ -135,7 +135,7 @@ function DutyMgmt() {
         <button onClick={assign} style={{width:'100%',background:SCHOOL_C[selSchool],color:'#faf8f4',border:'none',borderRadius:8,padding:'11px',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'Sarabun,sans-serif'}}>✓ บันทึกตารางเวร</button>
       </div>
 
-      <div style={{background:'#fff',border:'1px solid #e5e0d4',borderRadius:12,padding:20,overflowX:'auto'}}>
+      <div style={{flex:'2 1 400px',background:'#fff',border:'1px solid #e5e0d4',borderRadius:12,padding:20,overflowX:'auto'}}>
         <div style={{fontSize:14,fontWeight:700,color:'#252018',marginBottom:14}}>📅 ตารางเวร 14 วัน</div>
         <div style={{minWidth:580}}>
           <div style={{display:'grid',gridTemplateColumns:'80px repeat(4,1fr)',gap:3,marginBottom:4}}>
@@ -193,16 +193,99 @@ function CamMgmt({ user }: { user:AppUser }) {
   );
 }
 
+function DatabaseMgmt() {
+  const handleExport = () => {
+    const data = {
+      reports: load(K.reports),
+      duty: load(K.duty),
+      users: load(K.users),
+      cams: load(K.cams),
+      schools: load(K.schools)
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cctv_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('ส่งออกฐานข้อมูลสำเร็จ', 'ok');
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const json = JSON.parse(evt.target?.result as string);
+        if (!confirm('ข้อมูลเก่าบน Firebase จะถูกแทนที่ด้วยไฟล์นี้\nคุณแน่ใจหรือไม่?')) return;
+        toast('กำลังอัปโหลดข้อมูล...', 'ok');
+        await importDatabase(json);
+        toast('นำเข้าข้อมูลสำเร็จ!', 'ok');
+        setTimeout(() => window.location.reload(), 1000);
+      } catch (err) {
+        toast('ไฟล์ไม่ถูกต้อง หรือนำเข้าล้มเหลว', 'err');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleClear = async () => {
+    const code = prompt('หากต้องการล้างข้อมูลทั้งหมด (รายงาน, ครู, กล้อง)\nพิมพ์คำว่า "CONFIRM" เพื่อยืนยัน');
+    if (code !== 'CONFIRM') {
+      if (code !== null) toast('ยกเลิกการล้างข้อมูล', 'warn');
+      return;
+    }
+    toast('กำลังลบข้อมูลทั้งหมด...', 'warn');
+    await clearAllDatabase();
+    toast('ล้างฐานข้อมูลแล้ว', 'ok');
+    setTimeout(() => window.location.reload(), 1000);
+  };
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e5e0d4', borderRadius: 12, padding: 24, maxWidth: 500 }}>
+      <div style={{ fontSize: 16, fontWeight: 700, color: '#252018', marginBottom: 20 }}>จัดการฐานข้อมูลระบบ</div>
+      
+      <div style={{ background: '#f0f7f2', border: '1px solid #b3dcc0', borderRadius: 8, padding: 16, marginBottom: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#1e5c3b', marginBottom: 4 }}>📤 ส่งออกข้อมูล (Backup)</div>
+        <div style={{ fontSize: 12, color: '#4a6f56', marginBottom: 12 }}>ดาวน์โหลดข้อมูลทั้งหมดในระบบเก็บไว้เป็นไฟล์ .json</div>
+        <button onClick={handleExport} style={{ background: '#1e5c3b', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Sarabun,sans-serif' }}>
+          ดาวน์โหลด Backup
+        </button>
+      </div>
+
+      <div style={{ background: '#fcf8e3', border: '1px solid #f5e49f', borderRadius: 8, padding: 16, marginBottom: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#8a6d3b', marginBottom: 4 }}>📥 นำเข้าข้อมูล (Restore)</div>
+        <div style={{ fontSize: 12, color: '#8a6d3b', marginBottom: 12, opacity: 0.8 }}>อัปโหลดไฟล์ .json กลับเข้าระบบ (จะบันทึกลง Firebase แทนที่ของเดิมที่มี ID ตรงกัน)</div>
+        <label style={{ background: '#fff', border: '1px solid #e5e0d4', borderRadius: 6, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Sarabun,sans-serif', display: 'inline-block', color: '#574f44' }}>
+          เลือกไฟล์ Backup.json
+          <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
+        </label>
+      </div>
+
+      <div style={{ background: '#fde8e8', border: '1px solid rgba(183,28,28,.2)', borderRadius: 8, padding: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#b71c1c', marginBottom: 4 }}>🗑️ ล้างฐานข้อมูล (Factory Reset)</div>
+        <div style={{ fontSize: 12, color: '#b71c1c', marginBottom: 12, opacity: 0.8 }}>ลบข้อมูลรายงาน, ครูเวร, รายชื่อโรงเรียน และกล้องทั้งหมดแบบถาวร</div>
+        <button onClick={handleClear} style={{ background: '#b71c1c', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Sarabun,sans-serif' }}>
+          ลบข้อมูลทั้งหมด!
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:()=>void }) {
-  const [sub,setSub]=useState<'duty'|'users'|'cameras'>('duty');
+  const [sub,setSub]=useState<'duty'|'users'|'cameras'|'database'>('duty');
   const handleLogout=()=>{ clearAdminSession(); toast('ออกจากระบบ Admin','warn'); onLogout(); };
   return(
     <div>
       <PageHeader title="ระบบ Admin" subtitle={`เข้าสู่ระบบโดย: ${user.name}`}>
         <button onClick={handleLogout} style={{background:'#fde8e8',color:'#b71c1c',border:'1px solid rgba(183,28,28,.2)',borderRadius:7,padding:'7px 14px',fontSize:13,cursor:'pointer',fontFamily:'Sarabun,sans-serif',fontWeight:600}}>🔒 ออก Admin</button>
       </PageHeader>
-      <div style={{background:'#fff',borderBottom:'1px solid #e5e0d4',display:'flex',padding:'0 24px',gap:2}}>
-        {([['duty','📅','ตารางเวร'],['cameras','📹','ตั้งชื่อกล้อง'],['users','👨‍🏫','จัดการผู้ใช้']] as const).map(([id,ic,lb])=>(
+      <div style={{background:'#fff',borderBottom:'1px solid #e5e0d4',display:'flex',padding:'0 24px',gap:2,overflowX:'auto',whiteSpace:'nowrap'}}>
+        {([['duty','📅','ตารางเวร'],['cameras','📹','ตั้งชื่อกล้อง'],['users','👨‍🏫','จัดการผู้ใช้'],['database','💾','ฐานข้อมูล']] as const).map(([id,ic,lb])=>(
           <button key={id} onClick={()=>setSub(id)} style={{padding:'10px 18px',fontSize:14,fontWeight:sub===id?600:400,color:sub===id?'#1e5c3b':'#a89f8c',borderBottom:sub===id?'2px solid #1e5c3b':'2px solid transparent',background:'none',border:'none',cursor:'pointer',fontFamily:'Sarabun,sans-serif',display:'flex',alignItems:'center',gap:6}}>
             {ic} {lb}
           </button>
@@ -212,6 +295,7 @@ export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:
         {sub==='duty'&&<DutyMgmt/>}
         {sub==='cameras'&&<CamMgmt user={user}/>}
         {sub==='users'&&<UserMgmt/>}
+        {sub==='database'&&<DatabaseMgmt/>}
       </div>
     </div>
   );

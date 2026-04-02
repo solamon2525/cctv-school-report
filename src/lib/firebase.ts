@@ -134,3 +134,34 @@ export async function ensureAuth() {
     await signInAnonymously(auth);
   }
 }
+
+// ── Database Backup & Clear ──
+export async function clearAllDatabase() {
+  const collections = [COL.reports, COL.duty, COL.users, COL.cameras, COL.schools];
+  for (const c of collections) {
+    const snap = await getDocs(collection(db, c));
+    await Promise.all(snap.docs.map(d => deleteDoc(doc(db, c, d.id))));
+  }
+}
+
+export async function importDatabase(data: any) {
+  // data should be an object with keys matching COL, e.g. { reports: [...], duty: [...] }
+  const collections = [
+    { key: 'reports', col: COL.reports },
+    { key: 'duty', col: COL.duty },
+    { key: 'users', col: COL.users },
+    { key: 'cams', col: COL.cameras },
+    { key: 'schools', col: COL.schools }
+  ];
+  
+  for (const mapping of collections) {
+    const list = data[mapping.key];
+    if (Array.isArray(list)) {
+      for (const item of list) {
+        if (item && item.id) {
+          await setDoc(doc(db, mapping.col, item.id), item);
+        }
+      }
+    }
+  }
+}

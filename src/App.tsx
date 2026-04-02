@@ -54,7 +54,7 @@ export default function App() {
   return (
     <div style={{ minHeight:'100vh', background:'#faf8f4', fontFamily:'Sarabun,sans-serif' }}>
       {/* Top nav bar */}
-      <div style={{ background:'#fff', borderBottom:'1px solid #e5e0d4', position:'sticky', top:0, zIndex:100, display:'flex', alignItems:'center', padding:'0 24px', height:52 }}>
+      <div style={{ background:'#fff', borderBottom:'1px solid #e5e0d4', position:'sticky', top:0, zIndex:100, display:'flex', alignItems:'center', padding:'0 12px', height:52, overflowX:'auto' }}>
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:10, marginRight:28 }}>
           <div style={{ width:30, height:30, background:'#1e5c3b', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -69,7 +69,7 @@ export default function App() {
         </div>
 
         {/* Nav links */}
-        <div style={{ display:'flex', gap:2, flex:1 }}>
+        <div style={{ display:'flex', gap:2, flex:1, overflowX:'auto', minWidth:0 }}>
           {([
             ['dashboard','◫','แดชบอร์ด'],
             ['new-report','✎','บันทึกรายงาน'],
@@ -88,8 +88,8 @@ export default function App() {
         </div>
 
         {/* User info + logout */}
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <div style={{ textAlign:'right' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+          <div style={{ textAlign:'right', display:'none' /* Can hide on very small screens if we wanted, but we will just let it show */ }}>
             <div style={{ fontSize:12, fontWeight:600, color:'#252018' }}>{user.name}</div>
             <div style={{ fontSize:10, color:'#a89f8c' }}>
               {user.role==='director'?'ผู้อำนวยการ':user.role==='admin'?'Admin':load<School>(K.schools).find(s=>s.id===user.schoolId)?.shortName||''}

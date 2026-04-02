@@ -100,7 +100,7 @@ export default function Dashboard({ user, onNav, schoolId }: Props) {
       <div style={{ padding:24 }}>
         {/* Director: side-by-side school cards */}
         {isDirector && (
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18, marginBottom:24 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:18, marginBottom:24 }}>
             {schoolStats.map(({ school:s, todayR, monthR, hasMorn, hasAftn, issues }) => (
               <div key={s.id} style={{ background:'#fff', border:`1px solid ${SCHOOL_C[s.id]}40`, borderRadius:12, overflow:'hidden' }}>
                 <div style={{ background:SCHOOL_C[s.id], padding:'13px 18px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
@@ -146,7 +146,7 @@ export default function Dashboard({ user, onNav, schoolId }: Props) {
           return (
             <>
               {/* Today status */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(120px, 1fr))', gap:14, marginBottom:20 }}>
                 {[['รายงานวันนี้',todayR.length,sc],['เดือนนี้',monthR.length,'#574f44'],['ปกติ',rpts.filter(r=>r.isNormal&&r.date===td).length,'#2e7d32'],['มีปัญหา',rpts.filter(r=>!r.isNormal&&r.date===td).length,'#b71c1c']].map(([l,v,c])=>(
                   <div key={l as string} style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:10, padding:'14px 16px', borderTop:`3px solid ${c as string}` }}>
                     <div style={{ fontSize:10, color:'#a89f8c', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:6 }}>{l}</div>
@@ -156,7 +156,7 @@ export default function Dashboard({ user, onNav, schoolId }: Props) {
               </div>
 
               {/* Shift status */}
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(240px, 1fr))', gap:12, marginBottom:20 }}>
                 {[['morning','🌅','กะเช้า','07:00–12:00',hasMorn],['afternoon','🌇','กะบ่าย','12:00–17:00',hasAftn]].map(([s,ico,name,time,done])=>(
                   <div key={s as string} style={{ background:'#fff', border:`1px solid ${done?'#a5d6a7':'#e5e0d4'}`, borderRadius:10, padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
                     <span style={{ fontSize:26 }}>{ico}</span>
