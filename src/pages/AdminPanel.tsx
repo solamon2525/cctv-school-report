@@ -242,17 +242,18 @@ function DatabaseMgmt() {
     }
 
     const code = prompt('พิมพ์คำว่า "CONFIRM" เพื่อยืนยันการล้างข้อมูลที่เลือก');
-    if (code !== 'CONFIRM') {
-      if (code !== null) toast('ยกเลิกการล้างข้อมูล', 'warn');
+    if (!code || code.trim().toUpperCase() !== 'CONFIRM') {
+      toast('ยกเลิกการล้างข้อมูล', 'warn');
       return;
     }
     toast('กำลังลบข้อมูล...', 'warn');
     
     // Determine which collections to clear
+    const { COL } = await import('../lib/firebase');
     const colsToClear = [];
-    if (clrReports) colsToClear.push(K.reports);
-    if (clrDuty) colsToClear.push(K.duty);
-    if (clrUsers) colsToClear.push(K.users);
+    if (clrReports) colsToClear.push(COL.reports);
+    if (clrDuty) colsToClear.push(COL.duty);
+    if (clrUsers) colsToClear.push(COL.users);
 
     await clearAllDatabase(colsToClear);
     toast('ล้างข้อมูลเรียบร้อยแล้ว ✓ ระบบจะอัปเดตอัตโนมัติ', 'ok');
