@@ -1,29 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // ── โปรเจคโรงเรียน: อนุญาต read/write ทุก collection สำหรับ authenticated users ──
-    // เนื่องจากใช้ Anonymous Auth และระบบ PIN login ภายใน
-    // การตรวจสอบสิทธิ์ (role-based) ทำที่ฝั่ง client แทน
-
-    match /schools/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /users/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /reports/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /cameras/{docId} {
-      allow read, write: if request.auth != null;
-    }
-
-    match /duty/{docId} {
-      allow read, write: if request.auth != null;
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
