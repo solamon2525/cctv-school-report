@@ -67,13 +67,30 @@ export default function App() {
       <div style={{ background:'#fff', borderBottom:'1px solid #f3f0e8', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 16px' }}>
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          {user.schoolId && getSchoolLogo(user.schoolId) ? (
-            <img src={getSchoolLogo(user.schoolId)} alt="logo" style={{ width:34, height:34, objectFit:'contain', borderRadius:8, background:'#fff', border:'1px solid #e5e0d4', padding:2 }} />
+          {user.schoolId ? (
+            getSchoolLogo(user.schoolId) ? (
+              <img src={getSchoolLogo(user.schoolId)} alt="logo" style={{ width:34, height:34, objectFit:'contain', borderRadius:8, background:'#fff', border:'1px solid #e5e0d4', padding:2 }} />
+            ) : (
+              <div style={{ width:34, height:34, background:'#1e5c3b', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#faf8f4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3.5"/><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2"/>
+                </svg>
+              </div>
+            )
           ) : (
-            <div style={{ width:34, height:34, background:'#1e5c3b', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#faf8f4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3.5"/><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2"/>
-              </svg>
+            <div style={{ display:'flex', gap:6 }}>
+              {load<School>(K.schools).map(s => {
+                const logo = getSchoolLogo(s.id);
+                return logo ? (
+                  <img key={s.id} src={logo} alt="logo" style={{ width:34, height:34, objectFit:'contain', borderRadius:8, background:'#fff', border:'1px solid #e5e0d4', padding:2 }} />
+                ) : (
+                  <div key={s.id} style={{ width:34, height:34, background:s.id==='s1'?'#1e5c3b':'#1a4a7a', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#faf8f4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="3.5"/><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2"/>
+                    </svg>
+                  </div>
+                );
+              })}
             </div>
           )}
           <div>
