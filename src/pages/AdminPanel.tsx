@@ -330,7 +330,7 @@ function SchoolMgmt() {
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext('2d');
       if (ctx) ctx.drawImage(img, 0, 0, w, h);
-      const smallB64 = canvas.toDataURL('image/jpeg', 0.8).replace(/^data:image\/\w+;base64,/, '');
+      const smallB64 = canvas.toDataURL('image/png').replace(/^data:image\/\w+;base64,/, '');
 
       // 2. Upload to ImgBB
       const formData = new FormData();
