@@ -15,7 +15,7 @@ const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY            || "AIzaSyCgPoT6V_1LNTAXDPOhISYQscgLRqNrkkg",
   authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN        || "cctv-school-report.firebaseapp.com",
   projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID         || "cctv-school-report",
-  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET     || "cctv-school-report.firebasestorage.app",
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET     || "cctv-school-report.appspot.com",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID|| "845943447657",
   appId:             import.meta.env.VITE_FIREBASE_APP_ID             || "1:845943447657:web:39fe095cbc2a03d54cc2f8",
 };
