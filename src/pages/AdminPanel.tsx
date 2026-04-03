@@ -452,6 +452,8 @@ function LoginLogs() {
     try {
       const data = await getLoginLogs(200);
       setLogs(data as LoginLog[]);
+    } catch {
+      toast('โหลด Log ไม่สำเร็จ', 'err');
     } finally {
       setLoading(false);
     }

@@ -6,7 +6,7 @@
 import { initializeApp } from 'firebase/app';
 import {
   getFirestore, collection, doc, setDoc, getDoc, getDocs,
-  addDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot
+  addDoc, updateDoc, deleteDoc, query, where, orderBy, limit, onSnapshot
 } from 'firebase/firestore';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
@@ -125,9 +125,9 @@ export async function addLoginLog(log: Omit<import('./store').LoginLog, 'id'>) {
 }
 
 export async function getLoginLogs(limitCount = 200) {
-  const q = query(collection(db, COL.loginLogs), orderBy('timestamp', 'desc'));
+  const q = query(collection(db, COL.loginLogs), orderBy('timestamp', 'desc'), limit(limitCount));
   const snap = await getDocs(q);
-  return snap.docs.slice(0, limitCount).map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 // ── Logo upload to Firebase Storage ──
