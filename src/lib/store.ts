@@ -54,6 +54,16 @@ export interface DutySchedule {
   id: string; schoolId: string; date: string; shift: Shift;
   teacherId: string; timestamp: number;
 }
+export interface LoginLog {
+  id: string;
+  timestamp: number;
+  userId: string | null;
+  userName: string;
+  role: string;
+  schoolId: string | null;
+  success: boolean;
+  failReason?: string;
+}
 
 // ── Labels ──
 export const AREAS_KP = [

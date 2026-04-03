@@ -27,11 +27,12 @@ export const storage = getStorage(app);
 
 // ── Collections ──
 export const COL = {
-  schools:  'schools',
-  users:    'users',
-  reports:  'reports',
-  cameras:  'cameras',
-  duty:     'duty',
+  schools:   'schools',
+  users:     'users',
+  reports:   'reports',
+  cameras:   'cameras',
+  duty:      'duty',
+  loginLogs: 'login_logs',
 };
 
 // ── Firestore CRUD helpers ──
@@ -115,6 +116,18 @@ export async function saveDuty(duty: any) {
 
 export async function deleteDuty(dutyId: string) {
   await deleteDoc(doc(db, COL.duty, dutyId));
+}
+
+// ── Login Logs ──
+export async function addLoginLog(log: Omit<import('./store').LoginLog, 'id'>) {
+  await ensureAuth();
+  await addDoc(collection(db, COL.loginLogs), log);
+}
+
+export async function getLoginLogs(limitCount = 200) {
+  const q = query(collection(db, COL.loginLogs), orderBy('timestamp', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.slice(0, limitCount).map(d => ({ id: d.id, ...d.data() }));
 }
 
 // ── Logo upload to Firebase Storage ──

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { load, save, K, AppUser, School, Camera, DutySchedule, DutyReport, today, fmtDate, Shift, clearAdminSession, getSchoolLogo, setSchoolLogo } from '../lib/store';
-import { saveUser, deleteUser, saveDuty, deleteDuty, clearAllDatabase, importDatabase, saveSchool } from '../lib/firebase';
+import React, { useState, useEffect } from 'react';
+import { load, save, K, AppUser, School, Camera, DutySchedule, DutyReport, today, fmtDate, Shift, clearAdminSession, getSchoolLogo, setSchoolLogo, LoginLog } from '../lib/store';
+import { saveUser, deleteUser, saveDuty, deleteDuty, clearAllDatabase, importDatabase, saveSchool, getLoginLogs } from '../lib/firebase';
 import { toast } from '../lib/toast';
 import PageHeader from '../components/PageHeader';
 import Cameras from './Cameras';
@@ -439,8 +439,89 @@ function SchoolMgmt() {
   );
 }
 
+const ROLE_LABEL_LOG: Record<string,string> = { director:'ผู้อำนวยการ', admin:'Admin', teacher:'ครู' };
+const SCHOOL_NAME: Record<string,string> = { s1:'คำไผ่', s2:'หินเหลิ่ง' };
+
+function LoginLogs() {
+  const [logs, setLogs] = useState<LoginLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failOnly, setFailOnly] = useState(false);
+
+  const load_ = async () => {
+    setLoading(true);
+    try {
+      const data = await getLoginLogs(200);
+      setLogs(data as LoginLog[]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load_(); }, []);
+
+  const shown = failOnly ? logs.filter(l => !l.success) : logs;
+
+  const fmtTs = (ts: number) => {
+    const d = new Date(ts);
+    return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
+      + ' ' + d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
+  return (
+    <div>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, flexWrap:'wrap', gap:10 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <button onClick={load_} style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:8, padding:'7px 14px', fontSize:13, cursor:'pointer', fontFamily:'Sarabun,sans-serif', fontWeight:600 }}>
+            🔄 รีเฟรช
+          </button>
+          <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:13, color:'#5a5248', cursor:'pointer', fontFamily:'Sarabun,sans-serif' }}>
+            <input type="checkbox" checked={failOnly} onChange={e => setFailOnly(e.target.checked)} style={{ width:15, height:15 }}/>
+            แสดงเฉพาะ PIN ผิด
+          </label>
+        </div>
+        <div style={{ fontSize:12, color:'#a89f8c', fontFamily:'IBM Plex Mono,monospace' }}>{shown.length} รายการ</div>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign:'center', padding:40, color:'#a89f8c', fontSize:14 }}>กำลังโหลด...</div>
+      ) : shown.length === 0 ? (
+        <div style={{ textAlign:'center', padding:40, color:'#a89f8c', fontSize:14 }}>ยังไม่มีข้อมูล Log</div>
+      ) : (
+        <div style={{ overflowX:'auto' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13, fontFamily:'Sarabun,sans-serif' }}>
+            <thead>
+              <tr style={{ background:'#faf8f4', borderBottom:'2px solid #e5e0d4' }}>
+                {['วันเวลา','ชื่อผู้ใช้','บทบาท','โรงเรียน','ผลลัพธ์'].map(h => (
+                  <th key={h} style={{ padding:'10px 14px', textAlign:'left', fontSize:11, fontWeight:700, color:'#a89f8c', textTransform:'uppercase', letterSpacing:'.05em', whiteSpace:'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((log, i) => (
+                <tr key={log.id} style={{ borderBottom:'1px solid #f3f0e8', background: i % 2 === 0 ? '#fff' : '#fdfcfa' }}>
+                  <td style={{ padding:'10px 14px', color:'#5a5248', fontFamily:'IBM Plex Mono,monospace', fontSize:12, whiteSpace:'nowrap' }}>{fmtTs(log.timestamp)}</td>
+                  <td style={{ padding:'10px 14px', fontWeight:600, color:'#252018' }}>{log.userName}</td>
+                  <td style={{ padding:'10px 14px', color:'#5a5248' }}>{ROLE_LABEL_LOG[log.role] || log.role}</td>
+                  <td style={{ padding:'10px 14px', color:'#5a5248' }}>{log.schoolId ? SCHOOL_NAME[log.schoolId] || log.schoolId : 'ทั้ง 2 รร.'}</td>
+                  <td style={{ padding:'10px 14px' }}>
+                    {log.success ? (
+                      <span style={{ background:'#e8f5e9', color:'#2e7d32', borderRadius:6, padding:'3px 10px', fontSize:12, fontWeight:700 }}>✅ สำเร็จ</span>
+                    ) : (
+                      <span style={{ background:'#fde8e8', color:'#b71c1c', borderRadius:6, padding:'3px 10px', fontSize:12, fontWeight:700 }}>❌ PIN ผิด</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:()=>void }) {
-  const [sub,setSub]=useState<'duty'|'users'|'cameras'|'database'|'schools'>('schools');
+  const [sub,setSub]=useState<'duty'|'users'|'cameras'|'database'|'schools'|'logs'>('schools');
   const handleLogout=()=>{ clearAdminSession(); toast('ออกจากระบบ Admin','warn'); onLogout(); };
   return(
     <div>
@@ -448,7 +529,7 @@ export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:
         <button onClick={handleLogout} style={{background:'#fde8e8',color:'#b71c1c',border:'1px solid rgba(183,28,28,.2)',borderRadius:7,padding:'7px 14px',fontSize:13,cursor:'pointer',fontFamily:'Sarabun,sans-serif',fontWeight:600}}>🔒 ออก Admin</button>
       </PageHeader>
       <div style={{background:'#fff',borderBottom:'1px solid #e5e0d4',display:'flex',padding:'0 24px',gap:2,overflowX:'auto',whiteSpace:'nowrap'}}>
-        {([['schools','🏫','ข้อมูลโรงเรียน'],['duty','📅','ตารางเวร'],['cameras','📹','ตั้งชื่อกล้อง'],['users','👨‍🏫','จัดการผู้ใช้'],['database','💾','ฐานข้อมูล']] as const).map(([id,ic,lb])=>(
+        {([['schools','🏫','ข้อมูลโรงเรียน'],['duty','📅','ตารางเวร'],['cameras','📹','ตั้งชื่อกล้อง'],['users','👨‍🏫','จัดการผู้ใช้'],['database','💾','ฐานข้อมูล'],['logs','🔍','Log เข้าสู่ระบบ']] as const).map(([id,ic,lb])=>(
           <button key={id} onClick={()=>setSub(id as any)} style={{padding:'10px 18px',fontSize:14,fontWeight:sub===id?600:400,color:sub===id?'#1e5c3b':'#a89f8c',borderBottom:sub===id?'2px solid #1e5c3b':'2px solid transparent',background:'none',border:'none',cursor:'pointer',fontFamily:'Sarabun,sans-serif',display:'flex',alignItems:'center',gap:6}}>
             {ic} {lb}
           </button>
@@ -460,6 +541,7 @@ export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:
         {sub==='cameras'&&<CamMgmt user={user}/>}
         {sub==='users'&&<UserMgmt/>}
         {sub==='database'&&<DatabaseMgmt/>}
+        {sub==='logs'&&<LoginLogs/>}
       </div>
     </div>
   );

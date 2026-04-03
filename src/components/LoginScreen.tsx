@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { load, saveVal, startAdminSession, AppUser, School, K, getSchoolLogo } from '../lib/store';
+import { addLoginLog } from '../lib/firebase';
 import { toast } from '../lib/toast';
 
 interface Props { onLogin: (user: AppUser) => void; }
@@ -26,11 +27,13 @@ export default function LoginScreen({ onLogin }: Props) {
   const verify = (p: string) => {
     if (!selUser) return;
     if (p === selUser.pin) {
+      addLoginLog({ timestamp: Date.now(), userId: selUser.id, userName: selUser.name, role: selUser.role, schoolId: selUser.schoolId ?? null, success: true });
       if (selUser.role === 'admin' || selUser.role === 'director') startAdminSession(selUser.id);
       saveVal(K.activeUser, selUser.id);
       toast(`ยินดีต้อนรับ ${selUser.name.split(' ')[0]}`, 'ok');
       onLogin(selUser);
     } else {
+      addLoginLog({ timestamp: Date.now(), userId: selUser.id, userName: selUser.name, role: selUser.role, schoolId: selUser.schoolId ?? null, success: false, failReason: 'wrong_pin' });
       setErr('PIN ไม่ถูกต้อง'); setPin(''); setDots(0);
       setShaking(true); setTimeout(() => setShaking(false), 400);
     }
