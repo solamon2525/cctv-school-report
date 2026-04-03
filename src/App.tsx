@@ -8,6 +8,7 @@ import NewReport from './pages/NewReport';
 import History from './pages/History';
 import AdminPanel from './pages/AdminPanel';
 import DirectorFeed from './pages/DirectorFeed';
+import { LayoutDashboard, PenSquare, ImageIcon, ClipboardList, Settings } from 'lucide-react';
 
 type Page = 'dashboard'|'new-report'|'history'|'admin'|'director-feed';
 
@@ -98,18 +99,20 @@ export default function App() {
       {/* Sticky Nav Links Row */}
       <div style={{ background:'#fff', borderBottom:'1px solid #e5e0d4', position:'sticky', top:0, zIndex:100, display:'flex', overflowX:'auto', padding:'0 10px', boxShadow:'0 2px 10px rgba(0,0,0,0.03)' }}>
         {([
-          ['dashboard','◫','แดชบอร์ด'],
-          user.role === 'director' ? ['director-feed','🖼','สมุดรายงาน'] : ['new-report','✎','บันทึกรายงาน'],
-          ['history','≡','ประวัติ'],
-          ...(canAdmin?[['admin','⚙','Admin']] as any:[]),
-        ] as [Page,string,string][]).map(([p,ic,lb])=>(
-          <button key={p} onClick={()=>onNav(p)} style={{
+          ['dashboard', <LayoutDashboard size={18}/>, 'แดชบอร์ด'],
+          user.role === 'director' ? ['director-feed', <ImageIcon size={18}/>, 'สมุดรายงาน'] : ['new-report', <PenSquare size={18}/>, 'บันทึกรายงาน'],
+          ['history', <ClipboardList size={18}/>, 'ประวัติ'],
+          ...(canAdmin?[['admin', <Settings size={18}/>, 'Admin']] as any:[]),
+        ] as [Page,React.ReactNode,string][]).map(([p,ic,lb])=>(
+          <button key={p} onClick={()=>onNav(p)} 
+            className={`nav-btn ${page===p ? 'nav-active' : ''}`}
+            style={{
             display:'flex', alignItems:'center', gap:6, padding:'0 14px', height:48,
             background:'none', border:'none', borderBottom: page===p?'2px solid #1e5c3b':'2px solid transparent',
             color: page===p?'#1e5c3b':'#574f44', fontSize:14, fontWeight:page===p?600:400,
             cursor:'pointer', fontFamily:'Sarabun,sans-serif', whiteSpace:'nowrap',
           }}>
-            <span style={{ fontSize:15 }}>{ic}</span>{lb}
+            <span style={{ display:'flex', alignItems:'center', justifyContent:'center', opacity: page===p?1:0.7 }}>{ic}</span>{lb}
           </button>
         ))}
       </div>

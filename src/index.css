@@ -41,3 +41,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--neutral-0);color:var(--ne
 @keyframes toast-in{from{transform:translateY(10px) scale(.97);opacity:0}to{transform:none;opacity:1}}
 .toast-in{animation:toast-in .2s ease;}
 @media print{.no-print{display:none!important;}main{margin-left:0!important;}}
+
+/* 💥 Global Button Transitions & Hover States */
+button { transition: all 0.15s ease-out; }
+button:active { transform: translateY(1px); }
+
+/* Primary Buttons */
+.btn-primary { transition: all 0.15s ease-out; }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-primary:active:not(:disabled) { transform: translateY(1px); }
+
+/* Navigation Buttons specific hover */
+.nav-btn { transition: all 0.15s; }
+.nav-btn:hover:not(.nav-active) { background-color: var(--neutral-50); border-radius: 6px; }
