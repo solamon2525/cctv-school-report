@@ -62,56 +62,56 @@ export default function App() {
 
   return (
     <div style={{ minHeight:'100vh', background:'#faf8f4', fontFamily:'Sarabun,sans-serif' }}>
-      {/* Top nav bar */}
-      <div style={{ background:'#fff', borderBottom:'1px solid #e5e0d4', position:'sticky', top:0, zIndex:100, display:'flex', alignItems:'center', padding:'0 12px', height:52, overflowX:'auto' }}>
+      {/* Top Header Row (Logo & User Profile) */}
+      <div style={{ background:'#fff', borderBottom:'1px solid #f3f0e8', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 16px' }}>
         {/* Logo */}
-        <div style={{ display:'flex', alignItems:'center', gap:10, marginRight:28 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
           {user.schoolId && getSchoolLogo(user.schoolId) ? (
-            <img src={getSchoolLogo(user.schoolId)} alt="logo" style={{ width:30, height:30, objectFit:'contain', borderRadius:7, background:'#fff', border:'1px solid #e5e0d4', padding:2 }} />
+            <img src={getSchoolLogo(user.schoolId)} alt="logo" style={{ width:34, height:34, objectFit:'contain', borderRadius:8, background:'#fff', border:'1px solid #e5e0d4', padding:2 }} />
           ) : (
-            <div style={{ width:30, height:30, background:'#1e5c3b', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#faf8f4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <div style={{ width:34, height:34, background:'#1e5c3b', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#faf8f4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3.5"/><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2"/>
               </svg>
             </div>
           )}
           <div>
-            <div style={{ fontSize:12, fontWeight:700, color:'#1e5c3b', lineHeight:1 }}>ระบบรายงานเวร</div>
-            <div style={{ fontSize:10, color:'#a89f8c' }}>
+            <div style={{ fontSize:13, fontWeight:700, color:'#1e5c3b', lineHeight:1 }}>ระบบรายงานเวร</div>
+            <div style={{ fontSize:10, color:'#a89f8c', marginTop:2 }}>
               {user.schoolId ? load<School>(K.schools).find(s=>s.id===user.schoolId)?.shortName||'กลุ่มโรงเรียน' : 'กลุ่มโรงเรียน'}
             </div>
           </div>
         </div>
 
-        {/* Nav links */}
-        <div style={{ display:'flex', gap:2, flex:1, overflowX:'auto', minWidth:0 }}>
-          {([
-            ['dashboard','◫','แดชบอร์ด'],
-            user.role === 'director' ? ['director-feed','🖼','สมุดรายงาน'] : ['new-report','✎','บันทึกรายงาน'],
-            ['history','≡','ประวัติ'],
-            ...(canAdmin?[['admin','⚙','Admin']] as any:[]),
-          ] as [Page,string,string][]).map(([p,ic,lb])=>(
-            <button key={p} onClick={()=>onNav(p)} style={{
-              display:'flex', alignItems:'center', gap:6, padding:'0 14px', height:52,
-              background:'none', border:'none', borderBottom: page===p?'2px solid #1e5c3b':'2px solid transparent',
-              color: page===p?'#1e5c3b':'#574f44', fontSize:14, fontWeight:page===p?600:400,
-              cursor:'pointer', fontFamily:'Sarabun,sans-serif', whiteSpace:'nowrap',
-            }}>
-              <span style={{ fontSize:15 }}>{ic}</span>{lb}
-            </button>
-          ))}
-        </div>
-
         {/* User info + logout */}
-        <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
-          <div style={{ textAlign:'right' }}>
-            <div style={{ fontSize:12, fontWeight:600, color:'#252018' }}>{user.name}</div>
-            <div style={{ fontSize:10, color:'#a89f8c' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <div style={{ textAlign:'right', display:'flex', flexDirection:'column', justifyContent:'center' }}>
+            <div style={{ fontSize:12, fontWeight:600, color:'#252018', lineHeight:1 }}>{user.name.split(' ')[0]}</div>
+            <div style={{ fontSize:10, color:'#a89f8c', marginTop:2 }}>
               {user.role==='director'?'ผู้อำนวยการ':user.role==='admin'?'Admin':load<School>(K.schools).find(s=>s.id===user.schoolId)?.shortName||''}
             </div>
           </div>
-          <button onClick={onLogout} style={{ background:'#f3f0e8', border:'1px solid #e5e0d4', borderRadius:7, padding:'6px 12px', fontSize:12, cursor:'pointer', color:'#574f44', fontFamily:'Sarabun,sans-serif' }}>ออก</button>
+          <button onClick={onLogout} style={{ background:'#f3f0e8', border:'1px solid #e5e0d4', borderRadius:7, padding:'7px 12px', fontSize:12, cursor:'pointer', color:'#574f44', fontFamily:'Sarabun,sans-serif' }}>ออก</button>
         </div>
+      </div>
+
+      {/* Sticky Nav Links Row */}
+      <div style={{ background:'#fff', borderBottom:'1px solid #e5e0d4', position:'sticky', top:0, zIndex:100, display:'flex', overflowX:'auto', padding:'0 10px', boxShadow:'0 2px 10px rgba(0,0,0,0.03)' }}>
+        {([
+          ['dashboard','◫','แดชบอร์ด'],
+          user.role === 'director' ? ['director-feed','🖼','สมุดรายงาน'] : ['new-report','✎','บันทึกรายงาน'],
+          ['history','≡','ประวัติ'],
+          ...(canAdmin?[['admin','⚙','Admin']] as any:[]),
+        ] as [Page,string,string][]).map(([p,ic,lb])=>(
+          <button key={p} onClick={()=>onNav(p)} style={{
+            display:'flex', alignItems:'center', gap:6, padding:'0 14px', height:48,
+            background:'none', border:'none', borderBottom: page===p?'2px solid #1e5c3b':'2px solid transparent',
+            color: page===p?'#1e5c3b':'#574f44', fontSize:14, fontWeight:page===p?600:400,
+            cursor:'pointer', fontFamily:'Sarabun,sans-serif', whiteSpace:'nowrap',
+          }}>
+            <span style={{ fontSize:15 }}>{ic}</span>{lb}
+          </button>
+        ))}
       </div>
 
       {/* Pages */}
