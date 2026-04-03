@@ -117,11 +117,32 @@ export default function LoginScreen({ onLogin }: Props) {
                 <div key={i} style={{ width:13, height:13, borderRadius:'50%', background:i<dots?ROLE_COLOR[selUser.role]:'#e5e0d4', transition:'background .12s' }}/>
               ))}
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, marginBottom:10 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:10 }}>
               {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((d,i) => (
                 <button key={i} onClick={() => d==='⌫'?handleBack():d?handleDigit(d):null}
                   disabled={!d&&d!=='0'}
-                  style={{ height:48, borderRadius:9, background:d==='⌫'?'#fde8e8':d?'#faf8f4':'transparent', border:d?'1px solid #e5e0d4':'none', fontSize:d==='⌫'?16:19, fontWeight:600, color:d==='⌫'?'#b71c1c':'#252018', cursor:d?'pointer':'default', fontFamily:'IBM Plex Mono,monospace', opacity:!d&&d!=='0'?0:1 }}>
+                  style={{ 
+                    height: 56, borderRadius: 12, 
+                    background: d==='⌫' ? '#fde8e8' : d ? '#fff' : 'transparent', 
+                    border: d ? '1px solid #e5e0d4' : 'none', 
+                    fontSize: d==='⌫' ? 20 : 22, fontWeight: 600, 
+                    color: d==='⌫' ? '#b71c1c' : '#252018', 
+                    cursor: d ? 'pointer' : 'default', 
+                    fontFamily: 'IBM Plex Mono,monospace', 
+                    opacity: !d && d!=='0' ? 0 : 1,
+                    boxShadow: d ? '0 2px 6px rgba(0,0,0,0.04)' : 'none',
+                    transition: 'all 0.1s ease',
+                  }}
+                  onPointerDown={(e) => {
+                    if (d) e.currentTarget.style.transform = 'scale(0.94)';
+                  }}
+                  onPointerUp={(e) => {
+                    if (d) e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                  onPointerLeave={(e) => {
+                    if (d) e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                  >
                   {d}
                 </button>
               ))}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { load, K, DutyReport, School, AppUser, fmtDate, today } from '../lib/store';
 import PageHeader from '../components/PageHeader';
+import { FileText, ShieldCheck, TrendingDown } from 'lucide-react';
 
 interface Props { user: AppUser; onNav:(p:any)=>void; schoolId:string; }
 
@@ -114,15 +115,21 @@ export default function Dashboard({ user, onNav, schoolId }: Props) {
               {/* 1. Hero KPI Cards */}
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))', gap:16 }}>
                 <div style={{ background:'linear-gradient(135deg, #1e5c3b, #143d27)', borderRadius:16, padding:20, color:'#fff', boxShadow:'0 4px 20px rgba(30,92,59,0.2)' }}>
-                  <div style={{ fontSize:13, opacity:0.8, textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>รายงานวันนี้</div>
+                  <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, opacity:0.8, textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>
+                    <FileText size={16} /> รายงานวันนี้
+                  </div>
                   <div style={{ fontSize:36, fontWeight:700, fontFamily:'IBM Plex Mono,monospace', lineHeight:1 }}>{todayRpts.length}</div>
                 </div>
                 <div style={{ background:todayIssues>0 ? 'linear-gradient(135deg, #d32f2f, #9a0007)' : 'linear-gradient(135deg, #2e7d32, #1b5e20)', borderRadius:16, padding:20, color:'#fff', boxShadow:todayIssues>0 ? '0 4px 20px rgba(211,47,47,0.3)' : '0 4px 20px rgba(46,125,50,0.2)' }}>
-                  <div style={{ fontSize:13, opacity:0.8, textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>สถานะเครือข่าย</div>
+                  <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, opacity:0.8, textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>
+                    <ShieldCheck size={16} /> สถานะเครือข่าย
+                  </div>
                   <div style={{ fontSize:28, fontWeight:700, lineHeight:1.3 }}>{todayIssues>0 ? `⚠ ${todayIssues} ปัญหาด่วน` : '🟢 ปกติทั้งหมด'}</div>
                 </div>
                 <div style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:16, padding:20, boxShadow:'0 4px 15px rgba(0,0,0,0.03)' }}>
-                  <div style={{ fontSize:13, color:'#a89f8c', textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>ปัญหาด่วนในเดือนนี้</div>
+                  <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'#a89f8c', textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>
+                    <TrendingDown size={16} /> ปัญหาด่วนในเดือนนี้
+                  </div>
                   <div style={{ fontSize:36, fontWeight:700, color:'#252018', fontFamily:'IBM Plex Mono,monospace', lineHeight:1 }}>{monthIssues}</div>
                 </div>
               </div>
@@ -158,15 +165,22 @@ export default function Dashboard({ user, onNav, schoolId }: Props) {
                 {/* 3. Trend Chart */}
                 <div style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:16, padding:20 }}>
                   <div style={{ fontSize:15, fontWeight:700, color:'#252018', marginBottom:20 }}>📈 สถิติการรายงานย้อนหลัง 7 วัน</div>
-                  <div style={{ display:'flex', alignItems:'flex-end', gap:10, height:180, paddingBottom:10 }}>
+                  <div style={{ display:'flex', alignItems:'flex-end', gap:10, height:180, paddingBottom:10, position:'relative', zIndex:1 }}>
+                    <div style={{ position:'absolute', top:20, bottom:10, left:0, right:0, display:'flex', flexDirection:'column', justifyContent:'space-between', zIndex:-1 }}>
+                      {[...Array(4)].map((_,i) => <div key={i} style={{ borderBottom:'1px dashed #e5e0d4', width:'100%' }} />)}
+                    </div>
                     {last7.map(d => {
                       const count = allRpts.filter(r=>r.date===d).length;
                       const thd = new Date(d);
                       const ht = Math.max(5, (count / maxRep) * 150);
                       return (
                         <div key={d} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
-                          <div style={{ width:'100%', maxWidth:40, height:ht, background:d===td?'#1e5c3b':'#e5e0d4', borderRadius:'6px 6px 0 0', position:'relative', transition:'all .3s' }}>
-                            <span style={{ position:'absolute', top:-20, left:'50%', transform:'translateX(-50%)', fontSize:11, fontWeight:700, color:'#574f44' }}>{count}</span>
+                          <div title={`การรายงานวันที่ ${thd.toLocaleDateString('th-TH')}: ${count} รายการ`} 
+                               style={{ width:'100%', maxWidth:40, height:ht, background:d===td?'linear-gradient(to top, #1e5c3b, #4fa374)':'linear-gradient(to top, #e5e0d4, #f3f0e8)', borderRadius:'6px 6px 0 0', position:'relative', transition:'all .2s ease', cursor:'pointer' }}
+                               onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
+                               onMouseOut={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+                          >
+                            <span style={{ position:'absolute', top:-20, left:'50%', transform:'translateX(-50%)', fontSize:11, fontWeight:700, color:d===td?'#1e5c3b':'#574f44' }}>{count}</span>
                           </div>
                           <div style={{ fontSize:10, color:'#a89f8c', fontWeight:d===td?700:400 }}>{thd.getDate()}/{thd.getMonth()+1}</div>
                         </div>
