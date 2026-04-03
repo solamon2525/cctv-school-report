@@ -31,7 +31,6 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   const [sign,     setSign]     = useState(user.name);
   const [isNormal, setIsNormal] = useState(true);
   const [photos,   setPhotos]   = useState<Photo[]>([]);
-  const [selCam,   setSelCam]   = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, status: '' });
@@ -48,7 +47,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
     setShift(getDefaultShift()); // reset shift ตามเวลาปัจจุบัน
     setIsNormal(true);
     setNote('');
-    setPhotos([]); setSelCam('');
+    setPhotos([]);
   };
 
   const setNormalAll = () => {
@@ -99,12 +98,10 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
 
   const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []).slice(0, 10 - photos.length);
-    const cam = cams.find((c:any) => c.id === selCam);
     for (const f of files) {
       const { dataUrl, originalSize, compressedSize } = await compressImage(f);
       setPhotos(p => [...p, {
         name: f.name, data: dataUrl,
-        camId: cam?.id, camName: cam?.name,
         originalSize, compressedSize,
       }]);
     }
@@ -308,31 +305,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
 
         {/* 📷 Photo section */}
         <div style={cardStyle}>
-          <label style={labelStyle}>📷 แนบรูปจากกล้องวงจรปิด</label>
-
-          {/* Camera selector */}
-          <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
-            <button onClick={() => setSelCam('')} style={{ padding:'6px 12px', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Sarabun,sans-serif', background:!selCam?sc:'#faf8f4', color:!selCam?'#faf8f4':'#574f44', border:`1.5px solid ${!selCam?sc:'#e5e0d4'}` }}>
-              ทั่วไป
-            </button>
-            {cams.map((cam:any) => (
-              <button key={cam.id} onClick={() => setSelCam(cam.id)} style={{ padding:'6px 12px', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Sarabun,sans-serif', background:selCam===cam.id?sc:'#faf8f4', color:selCam===cam.id?'#faf8f4':'#574f44', border:`1.5px solid ${selCam===cam.id?sc:'#e5e0d4'}` }}>
-                {cam.id}
-              </button>
-            ))}
-          </div>
-
-          {/* Selected cam info */}
-          {selCam && (
-            <div style={{ background:bg, border:`1px solid ${sc}40`, borderRadius:7, padding:'7px 12px', marginBottom:10, fontSize:12 }}>
-              <span style={{ fontWeight:600, color:sc }}>
-                {cams.find((c:any)=>c.id===selCam)?.id}
-              </span>
-              <span style={{ color:'#a89f8c', marginLeft:6 }}>
-                {cams.find((c:any)=>c.id===selCam)?.name} · {cams.find((c:any)=>c.id===selCam)?.location}
-              </span>
-            </div>
-          )}
+          <label style={labelStyle}>📷 แนบรูปรวม (ถ้ามี)</label>
 
           {/* Upload zone */}
           <div onClick={() => photos.length < 10 && fileRef.current?.click()} style={{
@@ -347,7 +320,6 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
             </div>
             <div style={{ fontSize:11, color:'#a89f8c', marginTop:3 }}>
               JPG, PNG · เหลือได้อีก {10-photos.length} รูป
-              {selCam ? ` · จาก ${selCam}` : ' · ทั่วไป'}
             </div>
           </div>
           <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleFiles} style={{ display:'none' }}/>
@@ -364,13 +336,6 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
                       <span style={{ fontSize:8, color:'#4caf50', fontFamily:'IBM Plex Mono,monospace', fontWeight:700 }}>
                         {(p.originalSize/1024/1024).toFixed(1)}MB → {(p.compressedSize/1024).toFixed(0)}KB
                       </span>
-                    </div>
-                  )}
-                  {/* Cam badge */}
-                  {p.camId && (
-                    <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'rgba(0,0,0,.55)', padding:'3px 6px' }}>
-                      <span style={{ fontSize:9, color:'#fff', fontFamily:'IBM Plex Mono,monospace' }}>{p.camId}</span>
-                      {p.camName && <span style={{ fontSize:9, color:'rgba(255,255,255,.7)', marginLeft:4 }}>{p.camName}</span>}
                     </div>
                   )}
                   <button onClick={() => removePhoto(i)} style={{ position:'absolute', top:4, right:4, width:20, height:20, borderRadius:'50%', background:'rgba(183,28,28,.8)', border:'none', color:'#fff', fontSize:11, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
