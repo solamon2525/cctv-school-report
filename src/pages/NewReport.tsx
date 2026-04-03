@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { load, save, K, DutyReport, AreaReport, AppUser, School, DutySchedule,
   AREAS_KP, AREAS_HL, Shift, today, nowTime, fmtDate } from '../lib/store';
-import { addReport } from '../lib/firebase';
+import { addReport, uploadReportPhoto } from '../lib/firebase';
 import { toast } from '../lib/toast';
 import PageHeader from '../components/PageHeader';
 
@@ -33,6 +33,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   const [photos,   setPhotos]   = useState<Photo[]>([]);
   const [selCam,   setSelCam]   = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const SCHOOL_C  = activeSchool === 's1' ? '#1e5c3b' : '#1a4a7a';
   const SCHOOL_BG = activeSchool === 's1' ? '#f0f7f2' : '#eff4fb';
@@ -84,7 +85,8 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
 
   const issueCount = areas.filter(a => a.status === 'issue').length;
 
-  const saveReport = () => {
+  const saveReport = async () => {
+    if (isSubmitting) return;
     const reports = load<DutyReport>(K.reports);
     const dup = reports.find(r =>
       r.schoolId === activeSchool && r.date === today() &&
@@ -95,14 +97,32 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
       return;
     }
 
-    const rpt: DutyReport = {
-      id:'r'+Date.now(), schoolId:activeSchool, date:today(), shift,
-      reporterId:user.id, time, isNormal, areas, note:note.trim(),
-      sign:sign.trim(), photos, timestamp:Date.now(),
-    };
-    addReport(rpt);
-    toast('บันทึกรายงานสำเร็จ ✓', 'ok');
-    setTimeout(() => onNav('dashboard'), 900);
+    setIsSubmitting(true);
+    if (photos.length > 0) {
+      toast('กำลังอัพโหลดรูปภาพและบันทึกข้อมูล...', 'ok');
+    }
+    
+    try {
+      const reportId = 'r'+Date.now();
+      const uploadedPhotos = await Promise.all(photos.map(async (p, idx) => {
+        // อัพโหลดรูปภาพเข้า Storage และรับ URL แทน Base64
+        const url = await uploadReportPhoto(reportId, `photo_${idx}.jpg`, p.data);
+        return { ...p, data: url };
+      }));
+
+      const rpt: DutyReport = {
+        id: reportId, schoolId:activeSchool, date:today(), shift,
+        reporterId:user.id, time, isNormal, areas, note:note.trim(),
+        sign:sign.trim(), photos: uploadedPhotos, timestamp:Date.now(),
+      };
+      await addReport(rpt);
+      toast('บันทึกรายงานสำเร็จ ✓', 'ok');
+      setTimeout(() => onNav('dashboard'), 900);
+    } catch (err) {
+      console.error(err);
+      toast('เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่', 'err');
+      setIsSubmitting(false);
+    }
   };
 
   const sc = SCHOOL_C;
@@ -314,8 +334,12 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
           </div>
         </div>
 
-        <button onClick={saveReport} style={{ width:'100%', background:sc, color:'#faf8f4', border:'none', borderRadius:12, padding:'15px', fontSize:16, fontWeight:700, cursor:'pointer', fontFamily:'Sarabun,sans-serif' }}>
-          💾 บันทึกรายงานเวร
+        <button onClick={saveReport} disabled={isSubmitting} style={{ 
+          width:'100%', background:isSubmitting?'#a89f8c':sc, color:'#faf8f4', border:'none', 
+          borderRadius:12, padding:'15px', fontSize:16, fontWeight:700, 
+          cursor:isSubmitting?'not-allowed':'pointer', fontFamily:'Sarabun,sans-serif' 
+        }}>
+          {isSubmitting ? '⏳ กำลังบันทึกข้อมูลและอัพโหลดรูป...' : '💾 บันทึกรายงานเวร'}
         </button>
       </div>
     </div>

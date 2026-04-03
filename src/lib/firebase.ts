@@ -129,6 +129,13 @@ export async function deleteLogo(schoolId: string): Promise<void> {
   await deleteObject(logoRef);
 }
 
+// ── Photo upload to Firebase Storage ──
+export async function uploadReportPhoto(reportId: string, fileName: string, dataUrl: string): Promise<string> {
+  const photoRef = ref(storage, `reports/${reportId}/${fileName}`);
+  await uploadString(photoRef, dataUrl, 'data_url');
+  return await getDownloadURL(photoRef);
+}
+
 // ── Anonymous auth (for Firestore rules) ──
 export async function ensureAuth() {
   if (!auth.currentUser) {
