@@ -13,14 +13,13 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   const schools = load<School>(K.schools);
   const [activeSchool, setActiveSchool] = useState(schoolId);
   const school = schools.find(s => s.id === activeSchool);
-  const areas0 = activeSchool === 's1' ? AREAS_KP : AREAS_HL;
   const cams   = load<any>(K.cams).filter((c:any) => c.schoolId === activeSchool);
 
   const getDefaultShift = (): Shift => new Date().getHours() < 12 ? 'morning' : 'afternoon';
 
   const [shift,    setShift]    = useState<Shift>(getDefaultShift);
   const [time,     setTime]     = useState(nowTime());
-  const [areas,    setAreas]    = useState<AreaReport[]>(() => areas0.map(a=>({area:a,status:'ok',note:''})));
+  const [areas,    setAreas]    = useState<AreaReport[]>(() => cams.map((c:any)=>({area:c.name,status:'ok',note:''})));
 
   // Bug #8: auto-update shift every minute in case form is left open past noon
   useEffect(() => {
@@ -42,8 +41,8 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   // Reset areas when school changes
   const handleSchoolChange = (sid: string) => {
     setActiveSchool(sid);
-    const a0 = sid === 's1' ? AREAS_KP : AREAS_HL;
-    setAreas(a0.map(a => ({ area:a, status:'ok', note:'' })));
+    const newCams = load<any>(K.cams).filter((c:any) => c.schoolId === sid);
+    setAreas(newCams.map((c:any) => ({ area:c.name, status:'ok', note:'' })));
     setShift(getDefaultShift()); // reset shift ตามเวลาปัจจุบัน
     setIsNormal(true);
     setNote('');
@@ -51,7 +50,8 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   };
 
   const setNormalAll = () => {
-    setAreas(areas0.map(a => ({ area:a, status:'ok', note:'' })));
+    const currentCams = load<any>(K.cams).filter((c:any) => c.schoolId === activeSchool);
+    setAreas(currentCams.map((c:any) => ({ area:c.name, status:'ok', note:'' })));
     setNote('เหตุการณ์ปกติ นักเรียนและบุคลากรปลอดภัย สถานที่เรียบร้อยดี');
     setIsNormal(true);
     toast('✓ เหตุการณ์ปกติ', 'ok');
