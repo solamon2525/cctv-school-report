@@ -182,7 +182,10 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
         reporterId:user.id, time, isNormal, areas, note:note.trim(),
         sign:sign.trim(), photos: uploadedPhotos, timestamp:Date.now(),
       };
-      await addReport(rpt);
+      
+      // แปลงเป็น JSON เพื่อลบค่าที่เป็น undefined อัตโนมัติ (ป้องกัน Firestore Error)
+      const cleanRpt = JSON.parse(JSON.stringify(rpt));
+      await addReport(cleanRpt);
 
       toast('บันทึกรายงานสำเร็จ ✓', 'ok');
       setUploadProgress({ current: 0, total: 0, status: '' });
