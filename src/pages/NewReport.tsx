@@ -286,7 +286,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
             placeholder="บันทึกเหตุการณ์ ข้อสังเกต สิ่งที่ต้องติดตาม..."
             style={{ width:'100%', background:'#faf8f4', border:'1px solid #e5e0d4', borderRadius:8, padding:'10px 12px', fontFamily:'Sarabun,sans-serif', fontSize:14, color:'#252018', outline:'none', resize:'vertical', marginBottom:8 }}/>
           <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-            {['เหตุการณ์ปกติ','นักเรียนมาครบ','บุคลากรมาครบ','สถานที่สะอาดเรียบร้อย','ไม่มีผู้บุกรุก','นักเรียนอยู่ในระเบียบ'].map(t => (
+            {['เหตุการณ์ปกติ','ไม่มีผู้บุกรุก'].map(t => (
               <button key={t} onClick={() => setNote(n => n?(n+' '+t):t)} style={{ background:bg, border:`1px solid ${sc}40`, borderRadius:20, padding:'4px 12px', fontSize:12, cursor:'pointer', color:sc, fontFamily:'Sarabun,sans-serif', fontWeight:500 }}>
                 + {t}
               </button>
