@@ -153,7 +153,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
           const formData = new FormData();
           formData.append('image', b64Data);
 
-          const apiKey = import.meta.env.VITE_IMGBB_API_KEY || '8901ad2cea77118247a53c681a9c2b48';
+          const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
           const rx = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
             method: 'POST',
             body: formData
