@@ -13,7 +13,52 @@ const SCHOOL_C:Record<string,string>={s1:'#1e5c3b',s2:'#1a4a7a'};
 function UserMgmt() {
   const [name,setName]=useState(''); const [role,setRole]=useState<'teacher'|'admin'>('teacher');
   const [schoolId,setSId]=useState('s1'); const [pin,setPin]=useState(''); const [editId,setEId]=useState<string|null>(null);
+  const [uploadingProfile, setUploadingProfile]=useState<string|null>(null);
   const users=load<AppUser>(K.users); const schools=load<School>(K.schools);
+
+  const handleUploadProfile = async (e: React.ChangeEvent<HTMLInputElement>, u: AppUser) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingProfile(u.id);
+    
+    try {
+      const b64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const img = new Image(); img.src = b64;
+      await new Promise(r => img.onload = r);
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > 200 || h > 200) {
+        if (w > h) { h *= 200 / w; w = 200; }
+        else { w *= 200 / h; h = 200; }
+      }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.drawImage(img, 0, 0, w, h);
+      const smallB64 = canvas.toDataURL('image/png').replace(/^data:image\/\w+;base64,/, '');
+
+      const formData = new FormData();
+      formData.append('image', smallB64);
+      const apiKey = import.meta.env.VITE_IMGBB_API_KEY || '8901ad2cea77118247a53c681a9c2b48';
+      const rx = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: 'POST', body: formData
+      });
+      const res = await rx.json();
+      if (!res.success) throw new Error('ImgBB Failed');
+      
+      const updatedUser = { ...u, photoUrl: res.data.url };
+      import('../lib/firebase').then(m => m.saveUser(updatedUser)); // ensure it saves
+      toast(`อัปเดตโปรไฟล์ ${u.name.split(' ')[0]} แล้ว`, 'ok');
+    } catch(err) {
+      toast('อัปเดตล้มเหลว', 'err');
+    } finally {
+      setUploadingProfile(null);
+    }
+  };
 
   const save_=()=>{
     if(!name.trim()){toast('กรุณากรอกชื่อ','err');return;}
@@ -71,13 +116,25 @@ function UserMgmt() {
           const sc=schools.find(s=>s.id===u.schoolId);
           return(
             <div key={u.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid #f3f0e8'}}>
-              <div style={{width:38,height:38,borderRadius:'50%',background:col+'18',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:col,flexShrink:0}}>{init}</div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:13,fontWeight:600,color:'#252018'}}>{u.name}</div>
-                <div style={{fontSize:11,color:'#a89f8c'}}>{ROLE_LABEL[u.role]} · {sc?.shortName||'ทั้ง 2 รร'} · รายงานแล้ว {cnt} ครั้ง</div>
-                <div style={{fontSize:10,color:'#ccc5b4',fontFamily:'IBM Plex Mono,monospace'}}>PIN: {'●'.repeat(u.pin.length)}</div>
+              <div style={{position:'relative'}}>
+                {u.photoUrl ? (
+                  <img src={u.photoUrl} alt="profile" style={{width:42,height:42,borderRadius:'50%',objectFit:'cover',border:`1px solid ${col}40`}} />
+                ) : (
+                  <div style={{width:42,height:42,borderRadius:'50%',background:col+'18',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:col,flexShrink:0}}>{init}</div>
+                )}
+                {uploadingProfile === u.id && (
+                  <div style={{position:'absolute',inset:0,background:'rgba(255,255,255,0.7)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10}}>...</div>
+                )}
               </div>
-              <div style={{display:'flex',gap:5}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:600,color:'#252018'}}>{u.name}</div>
+                <div style={{fontSize:11,color:'#a89f8c'}}>{ROLE_LABEL[u.role]} · {sc?.shortName||'ทั้ง 2 รร'}</div>
+              </div>
+              <div style={{display:'flex',gap:5,alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end'}}>
+                <label style={{background:'#faf8f4',border:'1px solid #e5e0d4',borderRadius:6,padding:'4px 10px',fontSize:12,cursor:uploadingProfile===u.id?'default':'pointer',color:'#574f44',fontFamily:'Sarabun,sans-serif'}}>
+                  📷 อัพรูป
+                  <input type="file" accept="image/png, image/jpeg" style={{display:'none'}} disabled={uploadingProfile===u.id} onChange={e=>handleUploadProfile(e,u)} />
+                </label>
                 <button onClick={()=>edit(u)} style={{background:'#f0f7f2',border:'1px solid #b3dcc0',borderRadius:6,padding:'4px 10px',fontSize:12,cursor:'pointer',color:'#1e5c3b',fontFamily:'Sarabun,sans-serif'}}>แก้ไข</button>
                 <button onClick={()=>del(u.id)} style={{background:'#fde8e8',border:'1px solid rgba(183,28,28,.2)',borderRadius:6,padding:'4px 10px',fontSize:12,cursor:'pointer',color:'#b71c1c',fontFamily:'Sarabun,sans-serif'}}>ลบ</button>
               </div>

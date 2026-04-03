@@ -43,7 +43,7 @@ export default function LoginScreen({ onLogin }: Props) {
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'linear-gradient(160deg,#f0f7f2 0%,#faf8f4 60%,#eff4fb 100%)', padding:'0 16px' }}>
 
       {/* School logos — side by side */}
-      <div style={{ display:'flex', alignItems:'center', gap:24, marginBottom:28, flexWrap:'wrap', justifyContent:'center' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:28, marginTop:24, flexWrap:'wrap', justifyContent:'center' }}>
         {schools.map((s, i) => {
           const logo = getSchoolLogo(s.id);
           return (
@@ -62,7 +62,7 @@ export default function LoginScreen({ onLogin }: Props) {
                 <div style={{ fontSize:11, fontWeight:600, color:s.id==='s1'?'#1e5c3b':'#1a4a7a', marginTop:6, maxWidth:100 }}>{s.shortName}</div>
               </div>
               {i < schools.length-1 && (
-                <div style={{ fontSize:22, color:'#ccc5b4', fontWeight:300 }}>·</div>
+                <div style={{ fontSize:22, color:'#ccc5b4', fontWeight:300, margin:'0 4px' }}>·</div>
               )}
             </React.Fragment>
           );
@@ -86,12 +86,16 @@ export default function LoginScreen({ onLogin }: Props) {
                 {group.users.map(u => (
                   <button key={u.id} onClick={() => { setSelUser(u); setStep('pin'); setPin(''); setDots(0); setErr(''); }}
                     style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'11px 20px', background:'none', border:'none', borderBottom:'1px solid #f3f0e8', cursor:'pointer', textAlign:'left', fontFamily:'Sarabun,sans-serif' }}>
-                    <div style={{ width:36, height:36, borderRadius:'50%', background:ROLE_COLOR[u.role]+'18', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700, color:ROLE_COLOR[u.role], flexShrink:0 }}>
-                      {u.name.split(' ').slice(-1)[0].slice(0,2)}
-                    </div>
+                    {u.photoUrl ? (
+                      <img src={u.photoUrl} alt={u.name} style={{ width:36, height:36, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:`1px solid ${ROLE_COLOR[u.role]}30` }} />
+                    ) : (
+                      <div style={{ width:36, height:36, borderRadius:'50%', background:ROLE_COLOR[u.role]+'18', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700, color:ROLE_COLOR[u.role], flexShrink:0 }}>
+                        {u.name.split(' ').slice(-1)[0].slice(0,2)}
+                      </div>
+                    )}
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:600, color:'#252018' }}>{u.name}</div>
-                      <div style={{ fontSize:11, color:'#a89f8c' }}>{ROLE_LABEL[u.role]} · {schoolName(u.schoolId)}</div>
+                      <div style={{ fontSize:15, fontWeight:600, color:'#252018' }}>{u.name}</div>
+                      <div style={{ fontSize:12, color:'#a89f8c' }}>{ROLE_LABEL[u.role]} · {schoolName(u.schoolId)}</div>
                     </div>
                     <span style={{ color:'#ccc5b4', fontSize:18 }}>›</span>
                   </button>
@@ -107,9 +111,13 @@ export default function LoginScreen({ onLogin }: Props) {
               style={{ display:'block', background:'none', border:'none', color:'#a89f8c', fontSize:14, cursor:'pointer', marginBottom:14, fontFamily:'Sarabun,sans-serif' }}>
               ‹ กลับ
             </button>
-            <div style={{ width:48, height:48, borderRadius:'50%', background:ROLE_COLOR[selUser.role]+'18', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, fontWeight:700, color:ROLE_COLOR[selUser.role], margin:'0 auto 10px' }}>
-              {selUser.name.split(' ').slice(-1)[0].slice(0,2)}
-            </div>
+            {selUser.photoUrl ? (
+              <img src={selUser.photoUrl} alt={selUser.name} style={{ width:54, height:54, borderRadius:'50%', objectFit:'cover', margin:'0 auto 10px', display:'block', border:`2px solid ${ROLE_COLOR[selUser.role]}` }} />
+            ) : (
+              <div style={{ width:48, height:48, borderRadius:'50%', background:ROLE_COLOR[selUser.role]+'18', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, fontWeight:700, color:ROLE_COLOR[selUser.role], margin:'0 auto 10px' }}>
+                {selUser.name.split(' ').slice(-1)[0].slice(0,2)}
+              </div>
+            )}
             <div style={{ fontSize:15, fontWeight:700, color:'#252018', marginBottom:3 }}>{selUser.name}</div>
             <div style={{ fontSize:12, color:'#a89f8c', marginBottom:20 }}>{ROLE_LABEL[selUser.role]}</div>
             <div style={{ display:'flex', justifyContent:'center', gap:14, marginBottom:22 }}>

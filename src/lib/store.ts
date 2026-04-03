@@ -34,6 +34,7 @@ export interface AppUser {
   id: string; name: string; role: UserRole;
   schoolId: string | null; // null = director (both schools)
   pin: string;
+  photoUrl?: string;
 }
 export interface DutyReport {
   id: string; schoolId: string; date: string; shift: Shift;
