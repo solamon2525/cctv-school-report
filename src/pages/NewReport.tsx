@@ -77,7 +77,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const MAX_SIZE = 800; // ลดจาก 1024 → 800 เพื่อไฟล์เบาขึ้น
+          const MAX_SIZE = 1024; // คืนขนาดเป็น 1024 เพื่อความชัดเจน (ImgBB รับได้เต็มที่)
           if (width > height) {
             if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
           } else {
@@ -87,7 +87,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.5); // ลด quality จาก 0.6 → 0.5
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // คืน quality เป็น 0.7 เพื่อความคมชัด
           const compressedSize = Math.round((dataUrl.length - 'data:image/jpeg;base64,'.length) * 0.75);
           resolve({ dataUrl, originalSize, compressedSize });
         };
@@ -140,34 +140,41 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
     try {
       const reportId = 'r'+Date.now();
       const uploadedPhotos: Photo[] = [];
-      let failedCount = 0;
 
       if (photos.length > 0) {
-        setUploadProgress({ current: 0, total: photos.length, status: 'กำลังอัพโหลดรูปภาพ...' });
+        setUploadProgress({ current: 0, total: photos.length, status: 'กำลังอัพโหลดรูปภาพไปเซิร์ฟเวอร์ ImgBB...' });
       }
 
       for (let idx = 0; idx < photos.length; idx++) {
-        // ตรวจสอบว่าผู้ใช้กดยกเลิกหรือไม่
         if (cancelRef.current) return;
-
+        
         const p = photos[idx];
-        setUploadProgress({ current: idx + 1, total: photos.length, status: `อัพโหลดรูป ${idx + 1}/${photos.length}...` });
+        setUploadProgress({ current: idx + 1, total: photos.length, status: `อัพโหลดรูปที่ ${idx + 1}/${photos.length}...` });
 
         try {
-          // อัพโหลดทีละรูป พร้อม retry ในตัว (ใน firebase.ts)
-          const url = await uploadReportPhoto(reportId, `photo_${idx}.jpg`, p.data);
-          uploadedPhotos.push({ ...p, data: url });
-        } catch (uploadErr: any) {
-          console.warn(`Photo ${idx + 1} upload failed, using fallback`, uploadErr?.message);
-          failedCount++;
-          // Fallback: เก็บ base64 ใน Firestore โดยตรง (ใช้งานได้ แม้จะใหญ่กว่า)
-          uploadedPhotos.push(p);
+          const b64Data = p.data.replace(/^data:image\/\w+;base64,/, '');
+          const formData = new FormData();
+          formData.append('image', b64Data);
+
+          const apiKey = import.meta.env.VITE_IMGBB_API_KEY || '8901ad2cea77118247a53c681a9c2b48';
+          const rx = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+            method: 'POST',
+            body: formData
+          });
+          const resMap = await rx.json();
+
+          if (resMap.success) {
+            uploadedPhotos.push({ ...p, data: resMap.data.url }); // ได้ URL นามสกุล .jpg ของจริง!
+          } else {
+            throw new Error('ImgBB Failed');
+          }
+        } catch (uploadErr) {
+          console.warn(`Photo ${idx + 1} upload to ImgBB failed, using fallback directly in DB`, uploadErr);
+          uploadedPhotos.push(p); // ถ้าอัพล้มเหลวสุดๆ ก็ยังเก็บเป็น base64 ไว้ในนี้ให้เหมือนเดิม
         }
       }
 
-      // ตรวจสอบอีกครั้งก่อนบันทึก
       if (cancelRef.current) return;
-
       setUploadProgress({ current: photos.length, total: photos.length, status: 'กำลังบันทึกรายงาน...' });
 
       const rpt: DutyReport = {
@@ -177,11 +184,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
       };
       await addReport(rpt);
 
-      if (failedCount > 0) {
-        toast(`บันทึกสำเร็จ ✓ (${failedCount} รูปใช้ fallback เนื่องจากเน็ตช้า)`, 'ok');
-      } else {
-        toast('บันทึกรายงานสำเร็จ ✓', 'ok');
-      }
+      toast('บันทึกรายงานสำเร็จ ✓', 'ok');
       setUploadProgress({ current: 0, total: 0, status: '' });
       setTimeout(() => onNav('dashboard'), 900);
     } catch (err: any) {
