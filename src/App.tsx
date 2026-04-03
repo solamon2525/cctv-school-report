@@ -66,14 +66,20 @@ export default function App() {
       <div style={{ background:'#fff', borderBottom:'1px solid #e5e0d4', position:'sticky', top:0, zIndex:100, display:'flex', alignItems:'center', padding:'0 12px', height:52, overflowX:'auto' }}>
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:10, marginRight:28 }}>
-          <div style={{ width:30, height:30, background:'#1e5c3b', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#faf8f4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3.5"/><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2"/>
-            </svg>
-          </div>
+          {user.schoolId && getSchoolLogo(user.schoolId) ? (
+            <img src={getSchoolLogo(user.schoolId)} alt="logo" style={{ width:30, height:30, objectFit:'contain', borderRadius:7, background:'#fff', border:'1px solid #e5e0d4', padding:2 }} />
+          ) : (
+            <div style={{ width:30, height:30, background:'#1e5c3b', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#faf8f4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3.5"/><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2"/>
+              </svg>
+            </div>
+          )}
           <div>
             <div style={{ fontSize:12, fontWeight:700, color:'#1e5c3b', lineHeight:1 }}>ระบบรายงานเวร</div>
-            <div style={{ fontSize:10, color:'#a89f8c' }}>กลุ่มโรงเรียน</div>
+            <div style={{ fontSize:10, color:'#a89f8c' }}>
+              {user.schoolId ? load<School>(K.schools).find(s=>s.id===user.schoolId)?.shortName||'กลุ่มโรงเรียน' : 'กลุ่มโรงเรียน'}
+            </div>
           </div>
         </div>
 
