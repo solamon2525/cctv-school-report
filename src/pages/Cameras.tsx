@@ -7,24 +7,51 @@ import { toast } from '../lib/toast';
 
 export default function Cameras({ schoolId }: { schoolId:string }) {
   const [showAdd, setShowAdd] = useState(false);
+  const [editingId, setEditingId] = useState<string|null>(null);
   const [newId,setNewId]=useState(''); const [newName,setNewName]=useState(''); const [newLoc,setNewLoc]=useState(''); const [newZone,setNewZone]=useState<CamZone>('exterior');
   const cams = load<Camera>(K.cams).filter(c => c.schoolId === schoolId);
   const ok=cams.filter(c=>c.status==='ok').length;
 
   const setSt = (id:string, status:CamStatus) => { updateCamera(id, {status}); toast(`${id}: ${stLbl[status]}`,'ok'); };
   const del = (id:string) => { if(!confirm('ลบกล้องนี้?'))return; deleteCamera(id); toast('ลบกล้องแล้ว','warn'); };
-  const doAdd = () => {
-    if(!newId||!newName){toast('กรุณากรอกรหัสและชื่อกล้อง','err');return;}
-    if(cams.find(c=>c.id===newId)){toast('รหัสนี้มีอยู่แล้ว','err');return;}
-    saveCamera({id:newId,schoolId,name:newName,location:newLoc||'—',zone:newZone,status:'ok'});
-    toast(`เพิ่ม ${newId} สำเร็จ`,'ok'); setShowAdd(false); [setNewId,setNewName,setNewLoc].forEach(s=>s(''));
+  
+  const startEdit = (c: Camera) => {
+    setEditingId(c.id);
+    setNewId(c.id);
+    setNewName(c.name);
+    setNewLoc(c.location);
+    setNewZone(c.zone);
+    setShowAdd(true);
   };
+
+  const closeModal = () => {
+    setShowAdd(false); setEditingId(null);
+    [setNewId,setNewName,setNewLoc].forEach(s=>s(''));
+  };
+
+  const doSave = () => {
+    if(!newName){toast('กรุณากรอกชื่อกล้อง','err');return;}
+    
+    if (editingId) {
+      // โหมดแก้ไข
+      updateCamera(editingId, { name: newName, location: newLoc || '—', zone: newZone });
+      toast(`อัปเดต ${editingId} สำเร็จ`,'ok');
+    } else {
+      // โหมดเพิ่มใหม่
+      if(!newId){toast('กรุณากรอกรหัสกล้อง','err');return;}
+      if(cams.find(c=>c.id===newId)){toast('รหัสนี้มีอยู่แล้ว','err');return;}
+      saveCamera({id:newId,schoolId,name:newName,location:newLoc||'—',zone:newZone,status:'ok'});
+      toast(`เพิ่ม ${newId} สำเร็จ`,'ok'); 
+    }
+    closeModal();
+  };
+
   const inp=(s?:React.CSSProperties):React.CSSProperties=>({background:'#fff',border:'1px solid var(--neutral-200)',borderRadius:8,padding:'9px 12px',fontFamily:'Sarabun,sans-serif',fontSize:14,color:'var(--neutral-700)',outline:'none',width:'100%',...s});
 
   return (
     <div>
       <PageHeader title="จัดการกล้อง CCTV" subtitle={(() => { const s=load<any>(K.schools).find((x:any)=>x.id===schoolId); return (s?.name||'') + ' · กล้อง ' + cams.length + ' ตัว · ปกติ ' + ok + ' · ผิดปกติ ' + (cams.length-ok); })()}>
-        <button onClick={()=>setShowAdd(true)} style={{background:'var(--brand-600)',color:'#faf8f4',border:'none',borderRadius:8,padding:'8px 16px',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'Sarabun,sans-serif'}}>+ เพิ่มกล้อง</button>
+        <button onClick={()=>{setEditingId(null);setShowAdd(true);}} style={{background:'var(--brand-600)',color:'#faf8f4',border:'none',borderRadius:8,padding:'8px 16px',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'Sarabun,sans-serif'}}>+ เพิ่มกล้อง</button>
       </PageHeader>
       <div style={{padding:24}}>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:12}}>
@@ -38,27 +65,37 @@ export default function Cameras({ schoolId }: { schoolId:string }) {
               <select value={c.status} onChange={e=>setSt(c.id,e.target.value as CamStatus)} style={{marginTop:8,background:'var(--neutral-0)',border:'1px solid var(--neutral-200)',borderRadius:6,padding:'5px 8px',fontFamily:'Sarabun,sans-serif',fontSize:12,cursor:'pointer',outline:'none',color:'var(--neutral-600)',width:'100%'}}>
                 <option value="ok">✓ ปกติ</option><option value="warning">⚠ ผิดปกติ</option><option value="error">✗ ไม่มีสัญญาณ</option><option value="offline">— ปิดใช้งาน</option>
               </select>
-              <button onClick={()=>del(c.id)} style={{marginTop:6,width:'100%',background:'var(--err-bg)',border:'1px solid rgba(183,28,28,.18)',borderRadius:6,padding:'5px',fontSize:12,cursor:'pointer',color:'var(--err)',fontFamily:'Sarabun,sans-serif'}}>ลบ</button>
+              <div style={{display:'flex',gap:6,marginTop:6}}>
+                <button onClick={()=>startEdit(c)} style={{flex:1,background:'#eef2ff',border:'1px solid rgba(79,70,229,.2)',borderRadius:6,padding:'5px',fontSize:12,cursor:'pointer',color:'var(--brand-600)',fontFamily:'Sarabun,sans-serif'}}>แก้ไข</button>
+                <button onClick={()=>del(c.id)} style={{flex:1,background:'var(--err-bg)',border:'1px solid rgba(183,28,28,.18)',borderRadius:6,padding:'5px',fontSize:12,cursor:'pointer',color:'var(--err)',fontFamily:'Sarabun,sans-serif'}}>ลบ</button>
+              </div>
             </div>
           ))}
         </div>
       </div>
       {showAdd&&(
-        <div onClick={e=>e.target===e.currentTarget&&setShowAdd(false)} style={{position:'fixed',inset:0,background:'rgba(30,42,28,.35)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+        <div onClick={e=>e.target===e.currentTarget&&closeModal()} style={{position:'fixed',inset:0,background:'rgba(30,42,28,.35)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
           <div style={{background:'#fff',borderRadius:12,padding:24,width:'100%',maxWidth:440}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:18}}><div style={{fontSize:16,fontWeight:700}}>เพิ่มกล้อง CCTV</div><button onClick={()=>setShowAdd(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--neutral-400)'}}>✕</button></div>
-            {([['รหัสกล้อง','เช่น CAM-13',newId,setNewId],['ชื่อกล้อง','เช่น กล้องหน้าโรงเรียน',newName,setNewName],['จุดติดตั้ง','เช่น ประตูหน้า',newLoc,setNewLoc]] as [string,string,string,React.Dispatch<React.SetStateAction<string>>][]).map(([l,p,v,s])=>(
-              <div key={l} style={{marginBottom:14}}><label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--neutral-400)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:5}}>{l}</label>
-                <input placeholder={p} value={v} onChange={e=>s(e.target.value)} style={inp()}/></div>
-            ))}
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:18}}><div style={{fontSize:16,fontWeight:700}}>{editingId ? 'แก้ไขข้อมูลกล้อง' : 'เพิ่มกล้อง CCTV'}</div><button onClick={closeModal} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--neutral-400)'}}>✕</button></div>
+            
+            <div style={{marginBottom:14}}><label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--neutral-400)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:5}}>รหัสกล้อง</label>
+              <input placeholder="เช่น CAM-13" value={newId} onChange={e=>setNewId(e.target.value)} disabled={!!editingId} style={inp(editingId ? {background:'#f5f5f5', color:'#999'} : {})}/>
+            </div>
+            <div style={{marginBottom:14}}><label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--neutral-400)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:5}}>ชื่อกล้อง</label>
+              <input placeholder="เช่น กล้องหน้าโรงเรียน" value={newName} onChange={e=>setNewName(e.target.value)} style={inp()}/>
+            </div>
+            <div style={{marginBottom:14}}><label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--neutral-400)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:5}}>จุดติดตั้ง (ถ้ามี)</label>
+              <input placeholder="เช่น ประตูหน้า" value={newLoc} onChange={e=>setNewLoc(e.target.value)} style={inp()}/>
+            </div>
+
             <div style={{marginBottom:16}}><label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--neutral-400)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:5}}>โซน</label>
               <select value={newZone} onChange={e=>setNewZone(e.target.value as CamZone)} style={inp()}>
                 {Object.entries(zoneLbl).map(([k,v])=><option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-              <button onClick={()=>setShowAdd(false)} style={{background:'#fff',border:'1px solid var(--neutral-200)',borderRadius:8,padding:'9px 18px',fontSize:14,cursor:'pointer',fontFamily:'Sarabun,sans-serif',color:'var(--neutral-600)'}}>ยกเลิก</button>
-              <button onClick={doAdd} style={{background:'var(--brand-600)',color:'#faf8f4',border:'none',borderRadius:8,padding:'9px 18px',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'Sarabun,sans-serif'}}>บันทึก</button>
+              <button onClick={closeModal} style={{background:'#fff',border:'1px solid var(--neutral-200)',borderRadius:8,padding:'9px 18px',fontSize:14,cursor:'pointer',fontFamily:'Sarabun,sans-serif',color:'var(--neutral-600)'}}>ยกเลิก</button>
+              <button onClick={doSave} style={{background:'var(--brand-600)',color:'#faf8f4',border:'none',borderRadius:8,padding:'9px 18px',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'Sarabun,sans-serif'}}>บันทึก</button>
             </div>
           </div>
         </div>
