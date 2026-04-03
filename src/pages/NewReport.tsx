@@ -65,19 +65,43 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
     });
   };
 
-  const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_SIZE = 1024;
+          if (width > height) {
+            if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+          } else {
+            if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []).slice(0, 10 - photos.length);
     const cam = cams.find((c:any) => c.id === selCam);
-    files.forEach(f => {
-      const r = new FileReader();
-      r.onload = ev => {
-        setPhotos(p => [...p, {
-          name: f.name, data: ev.target?.result as string,
-          camId: cam?.id, camName: cam?.name,
-        }]);
-      };
-      r.readAsDataURL(f);
-    });
+    for (const f of files) {
+      const compressed = await compressImage(f);
+      setPhotos(p => [...p, {
+        name: f.name, data: compressed,
+        camId: cam?.id, camName: cam?.name,
+      }]);
+    }
     if (fileRef.current) fileRef.current.value = '';
   };
 
@@ -104,11 +128,18 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
     
     try {
       const reportId = 'r'+Date.now();
-      const uploadedPhotos = await Promise.all(photos.map(async (p, idx) => {
+      
+      const uploadTask = Promise.all(photos.map(async (p, idx) => {
         // อัพโหลดรูปภาพเข้า Storage และรับ URL แทน Base64
         const url = await uploadReportPhoto(reportId, `photo_${idx}.jpg`, p.data);
         return { ...p, data: url };
       }));
+      
+      const timeoutTask = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('UPLOAD_TIMEOUT')), 15000); // รอได้มากสุด 15 วินาที
+      });
+
+      const uploadedPhotos = await Promise.race([uploadTask, timeoutTask]) as any[];
 
       const rpt: DutyReport = {
         id: reportId, schoolId:activeSchool, date:today(), shift,
@@ -118,9 +149,13 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
       await addReport(rpt);
       toast('บันทึกรายงานสำเร็จ ✓', 'ok');
       setTimeout(() => onNav('dashboard'), 900);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast('เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่', 'err');
+      if (err?.message === 'UPLOAD_TIMEOUT') {
+        toast('การอัพโหลดใช้เวลานานเกินไป กรุณาตรวจสอบอินเทอร์เน็ต', 'err');
+      } else {
+        toast('เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่', 'err');
+      }
       setIsSubmitting(false);
     }
   };
