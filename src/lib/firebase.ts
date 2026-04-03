@@ -129,11 +129,38 @@ export async function deleteLogo(schoolId: string): Promise<void> {
   await deleteObject(logoRef);
 }
 
-// ── Photo upload to Firebase Storage ──
-export async function uploadReportPhoto(reportId: string, fileName: string, dataUrl: string): Promise<string> {
+// ── Photo upload to Firebase Storage (with timeout & retry) ──
+async function uploadWithTimeout(reportId: string, fileName: string, dataUrl: string, timeoutMs = 15000): Promise<string> {
   const photoRef = ref(storage, `reports/${reportId}/${fileName}`);
-  await uploadString(photoRef, dataUrl, 'data_url');
-  return await getDownloadURL(photoRef);
+  
+  // Wrap upload in a timeout race
+  const uploadPromise = (async () => {
+    await uploadString(photoRef, dataUrl, 'data_url');
+    return await getDownloadURL(photoRef);
+  })();
+
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('UPLOAD_TIMEOUT')), timeoutMs)
+  );
+
+  return Promise.race([uploadPromise, timeoutPromise]);
+}
+
+export async function uploadReportPhoto(
+  reportId: string, fileName: string, dataUrl: string,
+  retries = 1, timeoutMs = 15000
+): Promise<string> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await uploadWithTimeout(reportId, fileName, dataUrl, timeoutMs);
+    } catch (err: any) {
+      console.warn(`Upload attempt ${attempt + 1} failed for ${fileName}:`, err?.message);
+      if (attempt >= retries) throw err;
+      // Wait 1s before retry
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  throw new Error('UPLOAD_FAILED'); // unreachable, but TS needs it
 }
 
 // ── Anonymous auth (for Firestore rules) ──

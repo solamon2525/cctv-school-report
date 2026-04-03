@@ -5,7 +5,7 @@ import { addReport, uploadReportPhoto } from '../lib/firebase';
 import { toast } from '../lib/toast';
 import PageHeader from '../components/PageHeader';
 
-interface Photo { name: string; data: string; camId?: string; camName?: string; }
+interface Photo { name: string; data: string; camId?: string; camName?: string; originalSize?: number; compressedSize?: number; }
 interface Props { user: AppUser; onNav:(p:any)=>void; schoolId:string; }
 
 export default function NewReport({ user, onNav, schoolId }: Props) {
@@ -34,6 +34,8 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   const [selCam,   setSelCam]   = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, status: '' });
+  const cancelRef = useRef(false);
 
   const SCHOOL_C  = activeSchool === 's1' ? '#1e5c3b' : '#1a4a7a';
   const SCHOOL_BG = activeSchool === 's1' ? '#f0f7f2' : '#eff4fb';
@@ -65,8 +67,9 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
     });
   };
 
-  const compressImage = (file: File): Promise<string> => {
+  const compressImage = (file: File): Promise<{ dataUrl: string; originalSize: number; compressedSize: number }> => {
     return new Promise((resolve) => {
+      const originalSize = file.size;
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
@@ -74,7 +77,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const MAX_SIZE = 1024;
+          const MAX_SIZE = 800; // ลดจาก 1024 → 800 เพื่อไฟล์เบาขึ้น
           if (width > height) {
             if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
           } else {
@@ -84,7 +87,9 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.6));
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.5); // ลด quality จาก 0.6 → 0.5
+          const compressedSize = Math.round((dataUrl.length - 'data:image/jpeg;base64,'.length) * 0.75);
+          resolve({ dataUrl, originalSize, compressedSize });
         };
         img.src = e.target?.result as string;
       };
@@ -96,10 +101,11 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
     const files = Array.from(e.target.files || []).slice(0, 10 - photos.length);
     const cam = cams.find((c:any) => c.id === selCam);
     for (const f of files) {
-      const compressed = await compressImage(f);
+      const { dataUrl, originalSize, compressedSize } = await compressImage(f);
       setPhotos(p => [...p, {
-        name: f.name, data: compressed,
+        name: f.name, data: dataUrl,
         camId: cam?.id, camName: cam?.name,
+        originalSize, compressedSize,
       }]);
     }
     if (fileRef.current) fileRef.current.value = '';
@@ -108,6 +114,13 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   const removePhoto = (idx: number) => setPhotos(p => p.filter((_,i) => i !== idx));
 
   const issueCount = areas.filter(a => a.status === 'issue').length;
+
+  const cancelUpload = () => {
+    cancelRef.current = true;
+    setIsSubmitting(false);
+    setUploadProgress({ current: 0, total: 0, status: '' });
+    toast('ยกเลิกการอัพโหลดแล้ว', 'err');
+  };
 
   const saveReport = async () => {
     if (isSubmitting) return;
@@ -122,24 +135,40 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
     }
 
     setIsSubmitting(true);
-    if (photos.length > 0) {
-      toast('กำลังอัพโหลดรูปภาพและบันทึกข้อมูล...', 'ok');
-    }
+    cancelRef.current = false;
     
     try {
       const reportId = 'r'+Date.now();
-      
-      const uploadTask = Promise.all(photos.map(async (p, idx) => {
-        // อัพโหลดรูปภาพเข้า Storage และรับ URL แทน Base64
-        const url = await uploadReportPhoto(reportId, `photo_${idx}.jpg`, p.data);
-        return { ...p, data: url };
-      }));
-      
-      const timeoutTask = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('UPLOAD_TIMEOUT')), 15000); // รอได้มากสุด 15 วินาที
-      });
+      const uploadedPhotos: Photo[] = [];
+      let failedCount = 0;
 
-      const uploadedPhotos = await Promise.race([uploadTask, timeoutTask]) as any[];
+      if (photos.length > 0) {
+        setUploadProgress({ current: 0, total: photos.length, status: 'กำลังอัพโหลดรูปภาพ...' });
+      }
+
+      for (let idx = 0; idx < photos.length; idx++) {
+        // ตรวจสอบว่าผู้ใช้กดยกเลิกหรือไม่
+        if (cancelRef.current) return;
+
+        const p = photos[idx];
+        setUploadProgress({ current: idx + 1, total: photos.length, status: `อัพโหลดรูป ${idx + 1}/${photos.length}...` });
+
+        try {
+          // อัพโหลดทีละรูป พร้อม retry ในตัว (ใน firebase.ts)
+          const url = await uploadReportPhoto(reportId, `photo_${idx}.jpg`, p.data);
+          uploadedPhotos.push({ ...p, data: url });
+        } catch (uploadErr: any) {
+          console.warn(`Photo ${idx + 1} upload failed, using fallback`, uploadErr?.message);
+          failedCount++;
+          // Fallback: เก็บ base64 ใน Firestore โดยตรง (ใช้งานได้ แม้จะใหญ่กว่า)
+          uploadedPhotos.push(p);
+        }
+      }
+
+      // ตรวจสอบอีกครั้งก่อนบันทึก
+      if (cancelRef.current) return;
+
+      setUploadProgress({ current: photos.length, total: photos.length, status: 'กำลังบันทึกรายงาน...' });
 
       const rpt: DutyReport = {
         id: reportId, schoolId:activeSchool, date:today(), shift,
@@ -147,16 +176,19 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
         sign:sign.trim(), photos: uploadedPhotos, timestamp:Date.now(),
       };
       await addReport(rpt);
-      toast('บันทึกรายงานสำเร็จ ✓', 'ok');
+
+      if (failedCount > 0) {
+        toast(`บันทึกสำเร็จ ✓ (${failedCount} รูปใช้ fallback เนื่องจากเน็ตช้า)`, 'ok');
+      } else {
+        toast('บันทึกรายงานสำเร็จ ✓', 'ok');
+      }
+      setUploadProgress({ current: 0, total: 0, status: '' });
       setTimeout(() => onNav('dashboard'), 900);
     } catch (err: any) {
       console.error(err);
-      if (err?.message === 'UPLOAD_TIMEOUT') {
-        toast('การอัพโหลดใช้เวลานานเกินไป กรุณาตรวจสอบอินเทอร์เน็ต', 'err');
-      } else {
-        toast('เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่', 'err');
-      }
+      toast('เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่', 'err');
       setIsSubmitting(false);
+      setUploadProgress({ current: 0, total: 0, status: '' });
     }
   };
 
@@ -320,6 +352,14 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
               {photos.map((p, i) => (
                 <div key={i} style={{ position:'relative', borderRadius:8, overflow:'hidden', aspectRatio:'4/3', border:'1px solid #e5e0d4' }}>
                   <img src={p.data} style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
+                  {/* Size badge */}
+                  {p.originalSize && p.compressedSize && (
+                    <div style={{ position:'absolute', top:4, left:4, background:'rgba(0,0,0,.65)', padding:'2px 6px', borderRadius:4 }}>
+                      <span style={{ fontSize:8, color:'#4caf50', fontFamily:'IBM Plex Mono,monospace', fontWeight:700 }}>
+                        {(p.originalSize/1024/1024).toFixed(1)}MB → {(p.compressedSize/1024).toFixed(0)}KB
+                      </span>
+                    </div>
+                  )}
                   {/* Cam badge */}
                   {p.camId && (
                     <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'rgba(0,0,0,.55)', padding:'3px 6px' }}>
@@ -369,13 +409,35 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
           </div>
         </div>
 
-        <button onClick={saveReport} disabled={isSubmitting} style={{ 
-          width:'100%', background:isSubmitting?'#a89f8c':sc, color:'#faf8f4', border:'none', 
-          borderRadius:12, padding:'15px', fontSize:16, fontWeight:700, 
-          cursor:isSubmitting?'not-allowed':'pointer', fontFamily:'Sarabun,sans-serif' 
-        }}>
-          {isSubmitting ? '⏳ กำลังบันทึกข้อมูลและอัพโหลดรูป...' : '💾 บันทึกรายงานเวร'}
-        </button>
+        {/* Upload progress bar */}
+        {isSubmitting && uploadProgress.total > 0 && (
+          <div style={{ marginBottom:14, background:'#fff', border:'1px solid #e5e0d4', borderRadius:10, padding:'14px 18px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+              <span style={{ fontSize:13, fontWeight:600, color:'#252018' }}>{uploadProgress.status}</span>
+              <span style={{ fontSize:12, color:'#a89f8c', fontFamily:'IBM Plex Mono,monospace' }}>
+                {uploadProgress.current}/{uploadProgress.total}
+              </span>
+            </div>
+            <div style={{ width:'100%', height:6, background:'#e5e0d4', borderRadius:3, overflow:'hidden' }}>
+              <div style={{
+                width:`${(uploadProgress.current / uploadProgress.total) * 100}%`,
+                height:'100%', background:sc, borderRadius:3,
+                transition:'width 0.3s ease',
+              }}/>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display:'flex', gap:10 }}>
+          <button onClick={isSubmitting ? cancelUpload : saveReport} style={{ 
+            flex:1, background:isSubmitting?'#b71c1c':sc, color:'#faf8f4', border:'none', 
+            borderRadius:12, padding:'15px', fontSize:16, fontWeight:700, 
+            cursor:'pointer', fontFamily:'Sarabun,sans-serif',
+            transition:'background 0.2s',
+          }}>
+            {isSubmitting ? '✕ ยกเลิกการอัพโหลด' : '💾 บันทึกรายงานเวร'}
+          </button>
+        </div>
       </div>
     </div>
   );
