@@ -116,6 +116,8 @@ export function getSessionUser(): string {
 
 // ── Logo helpers ──
 export function getSchoolLogo(schoolId: string): string {
+  const s = load<School>(K.schools).find(x => x.id === schoolId);
+  if (s?.logoUrl) return s.logoUrl;
   return localStorage.getItem('logo_' + schoolId) || '';
 }
 export function setSchoolLogo(schoolId: string, dataUrl: string): void {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { load, save, K, AppUser, School, Camera, DutySchedule, DutyReport, today, fmtDate, Shift, clearAdminSession, getSchoolLogo, setSchoolLogo } from '../lib/store';
-import { saveUser, deleteUser, saveDuty, deleteDuty, clearAllDatabase, importDatabase } from '../lib/firebase';
+import { saveUser, deleteUser, saveDuty, deleteDuty, clearAllDatabase, importDatabase, saveSchool } from '../lib/firebase';
 import { toast } from '../lib/toast';
 import PageHeader from '../components/PageHeader';
 import Cameras from './Cameras';
@@ -300,8 +300,90 @@ function DatabaseMgmt() {
   );
 }
 
+function SchoolMgmt() {
+  const schools = load<School>(K.schools);
+  const [uploading, setUploading] = useState<string|null>(null);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, school: School) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(school.id);
+    
+    try {
+      // 1. Resize image client-side to save bandwidth/storage and speed up upload
+      const b64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const img = new Image();
+      img.src = b64;
+      await new Promise(r => img.onload = r);
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > 400 || h > 400) {
+        if (w > h) { h *= 400 / w; w = 400; }
+        else { w *= 400 / h; h = 400; }
+      }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.drawImage(img, 0, 0, w, h);
+      const smallB64 = canvas.toDataURL('image/jpeg', 0.8).replace(/^data:image\/\w+;base64,/, '');
+
+      // 2. Upload to ImgBB
+      const formData = new FormData();
+      formData.append('image', smallB64);
+      const apiKey = import.meta.env.VITE_IMGBB_API_KEY || '8901ad2cea77118247a53c681a9c2b48';
+      const rx = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: 'POST', body: formData
+      });
+      const res = await rx.json();
+      if (!res.success) throw new Error('ImgBB Failed');
+      
+      const newUrl = res.data.url;
+      
+      // 3. Update Firestore
+      const updatedSchool = { ...school, logoUrl: newUrl };
+      await saveSchool(updatedSchool);
+      
+      toast(`อัปเดตโลโก้ ${school.shortName} แล้ว`, 'ok');
+    } catch(err) {
+      console.error(err);
+      toast('อัปเดตโลโก้ล้มเหลว', 'err');
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  return (
+    <div style={{ display:'flex', gap:20, flexWrap:'wrap' }}>
+      {schools.map(s => (
+        <div key={s.id} style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:12, padding:24, width: 320, textAlign:'center' }}>
+          <div style={{ fontSize:16, fontWeight:700, marginBottom:16, color:'#252018' }}>{s.name}</div>
+          <div style={{ background:'#faf8f4', padding:16, borderRadius:8, marginBottom:16, display:'inline-block' }}>
+            <img 
+              src={s.logoUrl || getSchoolLogo(s.id) || 'https://placehold.co/100?text=NO+LOGO'} 
+              alt={s.name}
+              style={{ width:120, height:120, objectFit:'contain', borderRadius:8 }} 
+            />
+          </div>
+          <div>
+            <label style={{ display:'inline-block', cursor: uploading === s.id ? 'default' : 'pointer', background: uploading === s.id ? '#ccc5b4' : '#1e5c3b', color:'#fff', padding:'8px 16px', borderRadius:8, fontSize:13, fontWeight:600, fontFamily:'Sarabun,sans-serif' }}>
+              {uploading === s.id ? 'กำลังอัปโหลด...' : 'เปลี่ยนโลโก้ (PNG/JPG)'}
+              <input type="file" accept="image/png, image/jpeg" style={{display:'none'}} disabled={uploading === s.id} onChange={e => handleUpload(e, s)} />
+            </label>
+          </div>
+          <div style={{ fontSize:11, color:'#a89f8c', marginTop:10 }}>* แนะนำรูปสี่เหลี่ยมจัตุรัส</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:()=>void }) {
-  const [sub,setSub]=useState<'duty'|'users'|'cameras'|'database'>('duty');
+  const [sub,setSub]=useState<'duty'|'users'|'cameras'|'database'|'schools'>('schools');
   const handleLogout=()=>{ clearAdminSession(); toast('ออกจากระบบ Admin','warn'); onLogout(); };
   return(
     <div>
@@ -309,13 +391,14 @@ export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:
         <button onClick={handleLogout} style={{background:'#fde8e8',color:'#b71c1c',border:'1px solid rgba(183,28,28,.2)',borderRadius:7,padding:'7px 14px',fontSize:13,cursor:'pointer',fontFamily:'Sarabun,sans-serif',fontWeight:600}}>🔒 ออก Admin</button>
       </PageHeader>
       <div style={{background:'#fff',borderBottom:'1px solid #e5e0d4',display:'flex',padding:'0 24px',gap:2,overflowX:'auto',whiteSpace:'nowrap'}}>
-        {([['duty','📅','ตารางเวร'],['cameras','📹','ตั้งชื่อกล้อง'],['users','👨‍🏫','จัดการผู้ใช้'],['database','💾','ฐานข้อมูล']] as const).map(([id,ic,lb])=>(
-          <button key={id} onClick={()=>setSub(id)} style={{padding:'10px 18px',fontSize:14,fontWeight:sub===id?600:400,color:sub===id?'#1e5c3b':'#a89f8c',borderBottom:sub===id?'2px solid #1e5c3b':'2px solid transparent',background:'none',border:'none',cursor:'pointer',fontFamily:'Sarabun,sans-serif',display:'flex',alignItems:'center',gap:6}}>
+        {([['schools','🏫','ข้อมูลโรงเรียน'],['duty','📅','ตารางเวร'],['cameras','📹','ตั้งชื่อกล้อง'],['users','👨‍🏫','จัดการผู้ใช้'],['database','💾','ฐานข้อมูล']] as const).map(([id,ic,lb])=>(
+          <button key={id} onClick={()=>setSub(id as any)} style={{padding:'10px 18px',fontSize:14,fontWeight:sub===id?600:400,color:sub===id?'#1e5c3b':'#a89f8c',borderBottom:sub===id?'2px solid #1e5c3b':'2px solid transparent',background:'none',border:'none',cursor:'pointer',fontFamily:'Sarabun,sans-serif',display:'flex',alignItems:'center',gap:6}}>
             {ic} {lb}
           </button>
         ))}
       </div>
       <div style={{padding:24}}>
+        {sub==='schools'&&<SchoolMgmt/>}
         {sub==='duty'&&<DutyMgmt/>}
         {sub==='cameras'&&<CamMgmt user={user}/>}
         {sub==='users'&&<UserMgmt/>}
