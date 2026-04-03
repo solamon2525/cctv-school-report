@@ -64,7 +64,7 @@ export default function App() {
   return (
     <div style={{ minHeight:'100vh', background:'#faf8f4', fontFamily:'Sarabun,sans-serif' }}>
       {/* Top Header Row (Logo & User Profile) */}
-      <div style={{ background:'#fff', borderBottom:'1px solid #f3f0e8', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 16px' }}>
+      <div style={{ background:'linear-gradient(to bottom,#fff 0%,#fdfcfa 100%)', borderBottom:'1px solid var(--neutral-100)', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 18px', boxShadow:'var(--shadow-xs)' }}>
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
           {user.schoolId ? (
@@ -109,27 +109,29 @@ export default function App() {
               {user.role==='director'?'ผู้อำนวยการ':user.role==='admin'?'Admin':load<School>(K.schools).find(s=>s.id===user.schoolId)?.shortName||''}
             </div>
           </div>
-          <button onClick={onLogout} style={{ background:'#f3f0e8', border:'1px solid #e5e0d4', borderRadius:7, padding:'7px 12px', fontSize:12, cursor:'pointer', color:'#574f44', fontFamily:'Sarabun,sans-serif' }}>ออก</button>
+          <button onClick={onLogout} className="btn-ghost" style={{ padding:'6px 14px', fontSize:12 }}>ออก</button>
         </div>
       </div>
 
       {/* Sticky Nav Links Row */}
-      <div style={{ background:'#fff', borderBottom:'1px solid #e5e0d4', position:'sticky', top:0, zIndex:100, display:'flex', overflowX:'auto', padding:'0 10px', boxShadow:'0 2px 10px rgba(0,0,0,0.03)' }}>
+      <div style={{ background:'#fff', borderBottom:'1px solid var(--neutral-100)', position:'sticky', top:0, zIndex:100, display:'flex', overflowX:'auto', padding:'6px 10px', gap:2, boxShadow:'var(--shadow-sm)' }}>
         {([
-          ['dashboard', <LayoutDashboard size={18}/>, 'แดชบอร์ด'],
-          user.role === 'director' ? ['director-feed', <ImageIcon size={18}/>, 'สมุดรายงาน'] : ['new-report', <PenSquare size={18}/>, 'บันทึกรายงาน'],
-          ['history', <ClipboardList size={18}/>, 'ประวัติ'],
-          ...(canAdmin?[['admin', <Settings size={18}/>, 'Admin']] as any:[]),
+          ['dashboard', <LayoutDashboard size={16}/>, 'แดชบอร์ด'],
+          user.role === 'director' ? ['director-feed', <ImageIcon size={16}/>, 'สมุดรายงาน'] : ['new-report', <PenSquare size={16}/>, 'บันทึกรายงาน'],
+          ['history', <ClipboardList size={16}/>, 'ประวัติ'],
+          ...(canAdmin?[['admin', <Settings size={16}/>, 'Admin']] as any:[]),
         ] as [Page,React.ReactNode,string][]).map(([p,ic,lb])=>(
-          <button key={p} onClick={()=>onNav(p)} 
+          <button key={p} onClick={()=>onNav(p)}
             className={`nav-btn ${page===p ? 'nav-active' : ''}`}
             style={{
-            display:'flex', alignItems:'center', gap:6, padding:'0 14px', height:48,
-            background:'none', border:'none', borderBottom: page===p?'2px solid #1e5c3b':'2px solid transparent',
-            color: page===p?'#1e5c3b':'#574f44', fontSize:14, fontWeight:page===p?600:400,
-            cursor:'pointer', fontFamily:'Sarabun,sans-serif', whiteSpace:'nowrap',
-          }}>
-            <span style={{ display:'flex', alignItems:'center', justifyContent:'center', opacity: page===p?1:0.7 }}>{ic}</span>{lb}
+              display:'flex', alignItems:'center', gap:7, padding:'8px 14px', height:40,
+              border:'none', borderBottom:'none',
+              color: page===p ? 'var(--brand-600)' : 'var(--neutral-500)',
+              fontSize:14, fontWeight: page===p ? 700 : 400,
+              cursor:'pointer', fontFamily:'Sarabun,sans-serif', whiteSpace:'nowrap',
+            }}>
+            <span style={{ display:'flex', alignItems:'center', opacity: page===p ? 1 : 0.6 }}>{ic}</span>
+            {lb}
           </button>
         ))}
       </div>

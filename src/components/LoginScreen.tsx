@@ -10,6 +10,7 @@ export default function LoginScreen({ onLogin }: Props) {
   const [pin, setPin]     = useState('');
   const [dots, setDots]   = useState<number>(0);
   const [err, setErr]     = useState('');
+  const [shaking, setShaking] = useState(false);
 
   const users   = load<AppUser>(K.users);
   const schools = load<School>(K.schools);
@@ -31,6 +32,7 @@ export default function LoginScreen({ onLogin }: Props) {
       onLogin(selUser);
     } else {
       setErr('PIN ไม่ถูกต้อง'); setPin(''); setDots(0);
+      setShaking(true); setTimeout(() => setShaking(false), 400);
     }
   };
 
@@ -85,6 +87,7 @@ export default function LoginScreen({ onLogin }: Props) {
                 <div style={{ padding:'7px 20px 3px', fontSize:10, fontWeight:700, color:'#a89f8c', textTransform:'uppercase', letterSpacing:'.07em', background:'#faf8f4', borderBottom:'1px solid #f3f0e8' }}>{group.label}</div>
                 {group.users.map(u => (
                   <button key={u.id} onClick={() => { setSelUser(u); setStep('pin'); setPin(''); setDots(0); setErr(''); }}
+                    className="login-user-row"
                     style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'11px 20px', background:'none', border:'none', borderBottom:'1px solid #f3f0e8', cursor:'pointer', textAlign:'left', fontFamily:'Sarabun,sans-serif' }}>
                     {u.photoUrl ? (
                       <img src={u.photoUrl} alt={u.name} style={{ width:36, height:36, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:`1px solid ${ROLE_COLOR[u.role]}30` }} />
@@ -120,9 +123,9 @@ export default function LoginScreen({ onLogin }: Props) {
             )}
             <div style={{ fontSize:15, fontWeight:700, color:'#252018', marginBottom:3 }}>{selUser.name}</div>
             <div style={{ fontSize:12, color:'#a89f8c', marginBottom:20 }}>{ROLE_LABEL[selUser.role]}</div>
-            <div style={{ display:'flex', justifyContent:'center', gap:14, marginBottom:22 }}>
+            <div className={shaking ? 'pin-shake' : ''} style={{ display:'flex', justifyContent:'center', gap:14, marginBottom:22 }}>
               {[0,1,2,3].map(i => (
-                <div key={i} style={{ width:13, height:13, borderRadius:'50%', background:i<dots?ROLE_COLOR[selUser.role]:'#e5e0d4', transition:'background .12s' }}/>
+                <div key={i} style={{ width:13, height:13, borderRadius:'50%', background:i<dots?ROLE_COLOR[selUser.role]:'#e5e0d4', transition:'background .12s', boxShadow: i<dots ? `0 0 0 3px ${ROLE_COLOR[selUser.role]}25` : 'none' }}/>
               ))}
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:10 }}>

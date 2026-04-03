@@ -3,54 +3,281 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design Tokens ─────────────────────────────── */
 :root {
+  /* Brand palette */
   --brand-50:#f0f7f2; --brand-100:#d8eede; --brand-200:#b3dcc0;
   --brand-300:#7fc29a; --brand-400:#4fa374; --brand-500:#2d7a52;
   --brand-600:#1e5c3b; --brand-700:#174830; --brand-800:#0f3220;
+
+  /* Gold accent */
   --gold-400:#d4a843; --gold-500:#b8891a; --gold-600:#9a6e0f;
+
+  /* Neutral palette */
   --neutral-0:#faf8f4; --neutral-50:#f3f0e8; --neutral-100:#e5e0d4;
   --neutral-200:#ccc5b4; --neutral-300:#a89f8c; --neutral-400:#7d7668;
   --neutral-500:#574f44; --neutral-600:#3a3530; --neutral-700:#252018;
-  --ok:#2e7d32; --ok-bg:#e8f5e9;
-  --warn:#c4891a; --warn-bg:#fef3dc;
-  --err:#b71c1c; --err-bg:#fde8e8;
-  --info:#1565c0; --info-bg:#e3eeff;
-  --background:var(--neutral-0); --foreground:var(--neutral-700);
-  --card:#ffffff; --card-foreground:var(--neutral-700);
-  --primary:var(--brand-600); --primary-foreground:#faf8f4;
-  --secondary:var(--neutral-50); --secondary-foreground:var(--neutral-600);
-  --muted:var(--neutral-50); --muted-foreground:var(--neutral-400);
-  --accent:var(--brand-50); --accent-foreground:var(--brand-700);
-  --border:var(--neutral-100); --input:var(--neutral-100);
-  --ring:var(--brand-400); --radius:0.5rem;
+
+  /* Semantic status */
+  --ok:#2e7d32;       --ok-bg:#e8f5e9;
+  --warn:#c4891a;     --warn-bg:#fef3dc;
+  --err:#b71c1c;      --err-bg:#fde8e8;
+  --info:#1565c0;     --info-bg:#e3eeff;
+
+  /* Shift colors */
+  --shift-morning-bg:#fff8e1;   --shift-morning-fg:#8a6000;
+  --shift-afternoon-bg:#e8f0ff; --shift-afternoon-fg:#1a3a8a;
+
+  /* School accent colors */
+  --school-s1:#1e5c3b; --school-s2:#1a4a7a;
+
+  /* Semantic aliases */
+  --background:var(--neutral-0);       --foreground:var(--neutral-700);
+  --card:#ffffff;                       --card-foreground:var(--neutral-700);
+  --primary:var(--brand-600);           --primary-foreground:#faf8f4;
+  --secondary:var(--neutral-50);        --secondary-foreground:var(--neutral-600);
+  --muted:var(--neutral-50);            --muted-foreground:var(--neutral-400);
+  --accent:var(--brand-50);             --accent-foreground:var(--brand-700);
+  --border:var(--neutral-100);          --input:var(--neutral-100);
+  --ring:var(--brand-400);
+
+  /* ─── Spacing Scale ─── */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+  --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+
+  /* ─── Border Radius Scale ─── */
+  --r-xs:4px; --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px;
+
+  /* ─── Shadow Scale ─── */
+  --shadow-xs:0 1px 3px rgba(37,32,24,.06);
+  --shadow-sm:0 2px 8px rgba(37,32,24,.07);
+  --shadow-md:0 4px 16px rgba(37,32,24,.09);
+  --shadow-lg:0 8px 28px rgba(37,32,24,.13);
 }
+
+/* ─── Base Reset ─────────────────────────────────── */
 *{box-sizing:border-box;}
-body{font-family:'Sarabun',sans-serif;background:var(--neutral-0);color:var(--neutral-700);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;}
-.mono{font-family:'IBM Plex Mono',monospace;}
+
+body {
+  font-family:'Sarabun',sans-serif;
+  background:var(--neutral-0);
+  color:var(--neutral-700);
+  font-size:15px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+
+.mono { font-family:'IBM Plex Mono',monospace; }
+
+/* ─── Scrollbar ──────────────────────────────────── */
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:var(--neutral-50);}
 ::-webkit-scrollbar-thumb{background:var(--neutral-200);border-radius:3px;}
-.s-ok{background:var(--ok-bg);color:var(--ok);}
-.s-warn{background:var(--warn-bg);color:var(--warn);}
-.s-err{background:var(--err-bg);color:var(--err);}
-.s-off{background:var(--neutral-50);color:var(--neutral-400);}
-.s-morning{background:#fff8e1;color:#8a6000;}
-.s-afternoon{background:#e8f0ff;color:#1a3a8a;}
+
+/* ─── Focus Ring (Accessibility) ────────────────── */
+:focus-visible {
+  outline:2px solid var(--brand-400);
+  outline-offset:2px;
+  border-radius:var(--r-sm);
+}
+button:focus-visible, a:focus-visible {
+  outline:2px solid var(--brand-400);
+  outline-offset:2px;
+}
+
+/* ─── Status Classes ─────────────────────────────── */
+.s-ok   { background:var(--ok-bg);   color:var(--ok);   }
+.s-warn { background:var(--warn-bg); color:var(--warn); }
+.s-err  { background:var(--err-bg);  color:var(--err);  }
+.s-off  { background:var(--neutral-50); color:var(--neutral-400); }
+.s-morning   { background:var(--shift-morning-bg);   color:var(--shift-morning-fg);   }
+.s-afternoon { background:var(--shift-afternoon-bg); color:var(--shift-afternoon-fg); }
+
+/* ─── Button System ──────────────────────────────── */
+button { transition: all 0.15s ease-out; }
+
+/* Primary buttons */
+.btn-primary {
+  background:var(--brand-600); color:#faf8f4;
+  border:none; border-radius:var(--r-md);
+  padding:10px 18px; font-weight:600;
+  cursor:pointer; font-family:'Sarabun',sans-serif;
+  transition:all .15s ease-out;
+}
+.btn-primary:hover:not(:disabled) {
+  background:var(--brand-500);
+  box-shadow:var(--shadow-sm);
+  transform:translateY(-1px);
+}
+.btn-primary:active:not(:disabled) { transform:translateY(0); box-shadow:none; }
+.btn-primary:disabled { opacity:.45; cursor:not-allowed; }
+
+/* Ghost buttons */
+.btn-ghost {
+  background:transparent; color:var(--neutral-500);
+  border:1px solid var(--neutral-100); border-radius:var(--r-md);
+  padding:9px 16px; font-weight:500;
+  cursor:pointer; font-family:'Sarabun',sans-serif;
+  transition:all .15s ease-out;
+}
+.btn-ghost:hover:not(:disabled) {
+  background:var(--neutral-50);
+  border-color:var(--neutral-200);
+  color:var(--neutral-700);
+}
+.btn-ghost:disabled { opacity:.45; cursor:not-allowed; }
+
+/* ─── Navigation ─────────────────────────────────── */
+.nav-btn {
+  transition: all 0.18s ease-out;
+  border-radius: var(--r-sm);
+  position: relative;
+}
+.nav-btn:hover:not(.nav-active) {
+  background: var(--neutral-50);
+  color: var(--neutral-700) !important;
+}
+.nav-btn.nav-active {
+  background: var(--brand-50);
+  color: var(--brand-600) !important;
+}
+
+/* ─── Input System ───────────────────────────────── */
+.field-input {
+  background:#fff;
+  border:1.5px solid var(--neutral-100);
+  border-radius:var(--r-sm);
+  padding:9px 12px;
+  font-family:'Sarabun',sans-serif;
+  font-size:14px;
+  color:var(--neutral-700);
+  outline:none;
+  width:100%;
+  transition:border-color .15s, box-shadow .15s;
+}
+.field-input:focus {
+  border-color:var(--brand-400);
+  box-shadow:0 0 0 3px rgba(79,163,116,.15);
+}
+.field-input:disabled {
+  background:var(--neutral-50);
+  color:var(--neutral-400);
+  cursor:not-allowed;
+}
+
+/* ─── Card System ────────────────────────────────── */
+.card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow-xs);
+}
+.card-hover {
+  transition:box-shadow .2s ease-out, transform .18s ease-out;
+  cursor:default;
+}
+.card-hover:hover {
+  box-shadow:var(--shadow-md);
+  transform:translateY(-2px);
+}
+
+/* ─── Table ──────────────────────────────────────── */
+.tbl-row {
+  transition: background .12s ease-out;
+}
+.tbl-row:hover {
+  background: var(--neutral-50);
+}
+
+/* ─── Modal ──────────────────────────────────────── */
+.modal-overlay {
+  position:fixed; inset:0; z-index:1000;
+  background:rgba(37,32,24,.45);
+  backdrop-filter:blur(3px);
+  display:flex; align-items:center; justify-content:center;
+  padding:16px;
+  animation:overlay-in .18s ease-out;
+}
+.modal-card {
+  background:#fff;
+  border-radius:var(--r-xl);
+  box-shadow:var(--shadow-lg);
+  width:100%; max-width:540px;
+  max-height:90vh;
+  overflow-y:auto;
+  animation:modal-slide-in .2s ease-out;
+}
+@keyframes overlay-in {
+  from { opacity:0; }
+  to   { opacity:1; }
+}
+@keyframes modal-slide-in {
+  from { opacity:0; transform:translateY(12px) scale(.97); }
+  to   { opacity:1; transform:none; }
+}
+
+/* ─── Login Hover Row ────────────────────────────── */
+.login-user-row {
+  transition:background .12s ease-out;
+}
+.login-user-row:hover {
+  background:var(--neutral-50) !important;
+}
+
+/* ─── PIN Shake Animation ────────────────────────── */
+@keyframes pin-shake {
+  0%,100% { transform:translateX(0); }
+  20%      { transform:translateX(-8px); }
+  40%      { transform:translateX(8px); }
+  60%      { transform:translateX(-5px); }
+  80%      { transform:translateX(5px); }
+}
+.pin-shake { animation:pin-shake .35s ease-out; }
+
+/* ─── Animations ─────────────────────────────────── */
 @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.25}}
 .live-dot{animation:pulse-dot 2s infinite;}
+
 @keyframes toast-in{from{transform:translateY(10px) scale(.97);opacity:0}to{transform:none;opacity:1}}
 .toast-in{animation:toast-in .2s ease;}
-@media print{.no-print{display:none!important;}main{margin-left:0!important;}}
 
-/* 💥 Global Button Transitions & Hover States */
-button { transition: all 0.15s ease-out; }
-button:active { transform: translateY(1px); }
+@keyframes fade-in { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+.fade-in { animation:fade-in .25s ease-out; }
 
-/* Primary Buttons */
-.btn-primary { transition: all 0.15s ease-out; }
-.btn-primary:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
-.btn-primary:active:not(:disabled) { transform: translateY(1px); }
+/* ─── Badge System ───────────────────────────────── */
+.badge {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 10px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:600;
+  white-space:nowrap;
+  line-height:1.4;
+}
+.badge-dot {
+  width:5px; height:5px;
+  border-radius:50%;
+  flex-shrink:0;
+}
 
-/* Navigation Buttons specific hover */
-.nav-btn { transition: all 0.15s; }
-.nav-btn:hover:not(.nav-active) { background-color: var(--neutral-50); border-radius: 6px; }
+/* ─── Empty State ────────────────────────────────── */
+.empty-state {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:40px 20px;
+  color:var(--neutral-400);
+  text-align:center;
+  gap:10px;
+}
+.empty-state svg { opacity:.4; }
+.empty-state p { font-size:13px; margin:0; }
+
+/* ─── Print ──────────────────────────────────────── */
+@media print {
+  .no-print { display:none !important; }
+  main { margin-left:0 !important; }
+}
