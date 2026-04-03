@@ -13,7 +13,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   const schools = load<School>(K.schools);
   const [activeSchool, setActiveSchool] = useState(schoolId);
   const school = schools.find(s => s.id === activeSchool);
-  const cams   = load<any>(K.cams).filter((c:any) => c.schoolId === activeSchool);
+  const cams   = load<any>(K.cams).filter((c:any) => c.schoolId === activeSchool && c.status !== 'offline');
 
   const getDefaultShift = (): Shift => new Date().getHours() < 12 ? 'morning' : 'afternoon';
 
@@ -41,7 +41,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   // Reset areas when school changes
   const handleSchoolChange = (sid: string) => {
     setActiveSchool(sid);
-    const newCams = load<any>(K.cams).filter((c:any) => c.schoolId === sid);
+    const newCams = load<any>(K.cams).filter((c:any) => c.schoolId === sid && c.status !== 'offline');
     setAreas(newCams.map((c:any) => ({ area:c.name, status:'ok', note:'' })));
     setShift(getDefaultShift()); // reset shift ตามเวลาปัจจุบัน
     setIsNormal(true);
@@ -50,7 +50,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   };
 
   const setNormalAll = () => {
-    const currentCams = load<any>(K.cams).filter((c:any) => c.schoolId === activeSchool);
+    const currentCams = load<any>(K.cams).filter((c:any) => c.schoolId === activeSchool && c.status !== 'offline');
     setAreas(currentCams.map((c:any) => ({ area:c.name, status:'ok', note:'' })));
     setNote('เหตุการณ์ปกติ นักเรียนและบุคลากรปลอดภัย สถานที่เรียบร้อยดี');
     setIsNormal(true);
@@ -230,7 +230,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
                     padding:'12px', cursor:'pointer', fontFamily:'Sarabun,sans-serif', textAlign:'left',
                   }}>
                     <div style={{ fontSize:14, fontWeight:700, color:activeSchool===s.id?sc2:'#574f44' }}>{s.name}</div>
-                    <div style={{ fontSize:11, color:'#a89f8c', marginTop:2 }}>กล้อง {load<any>(K.cams).filter((c:any)=>c.schoolId===s.id).length} ตัว</div>
+                    <div style={{ fontSize:11, color:'#a89f8c', marginTop:2 }}>กล้อง {load<any>(K.cams).filter((c:any)=>c.schoolId===s.id && c.status!=='offline').length} ตัว (เปิดใช้งาน)</div>
                   </button>
                 );
               })}
