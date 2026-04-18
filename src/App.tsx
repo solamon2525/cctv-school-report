@@ -56,10 +56,16 @@ export default function App() {
   };
 
   const onLogout = () => { saveVal(K.activeUser,''); setUser(null); };
-  const onAdminLogout = () => { setPage('dashboard'); };
+  const onAdminLogout = () => { 
+    if (user.role !== 'admin') {
+      setPage('dashboard');
+    } else {
+      setPage('dashboard');
+    }
+  };
 
-  // Nav items based on role
-  const canAdmin = user.role==='admin' || user.role==='director';
+  // Nav items based on role - only admin can access admin panel
+  const canAdmin = user.role==='admin';
 
   return (
     <div style={{ minHeight:'100vh', background:'var(--neutral-0)', fontFamily:'Sarabun,sans-serif' }}>
@@ -106,7 +112,7 @@ export default function App() {
           <div style={{ textAlign:'right', display:'flex', flexDirection:'column', justifyContent:'center' }}>
             <div style={{ fontSize:13, fontWeight:700, color:'#292524', lineHeight:1 }}>{user.name.split(' ')[0]}</div>
             <div style={{ fontSize:11, color:'#a8a29e', marginTop:2, fontWeight: 500 }}>
-              {user.role==='director'?'ผู้อำนวยการ':user.role==='admin'?'Admin':load<School>(K.schools).find(s=>s.id===user.schoolId)?.shortName||''}
+              {user.role==='director'?'ผู้อำนวยการ':user.role==='admin'?'Admin (ผู้ดูแลระบบ)':load<School>(K.schools).find(s=>s.id===user.schoolId)?.shortName||''}
             </div>
           </div>
           <button onClick={onLogout} className="btn-ghost" style={{ padding:'8px 16px', fontSize:13, display: 'flex', alignItems: 'center', gap: 6 }}>

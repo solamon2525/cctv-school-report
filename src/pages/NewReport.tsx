@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { load, save, K, DutyReport, AreaReport, AppUser, School, DutySchedule,
-  AREAS_KP, AREAS_HL, Shift, today, nowTime, fmtDate } from '../lib/store';
+  AREAS_KP, AREAS_HL, Shift, today, nowTime, fmtDate, isBackdateReportAllowed, getBackdateMaxDays } from '../lib/store';
 import { addReport, uploadReportPhoto } from '../lib/firebase';
 import { toast } from '../lib/toast';
 import PageHeader from '../components/PageHeader';
@@ -17,7 +17,17 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
 
   const getDefaultShift = (): Shift => new Date().getHours() < 12 ? 'morning' : 'afternoon';
 
-  const [reportDate, setReportDate] = useState(today());
+  // Backdate Report Control
+  const isBackdateAllowed = isBackdateReportAllowed();
+  const maxBackdateDays = getBackdateMaxDays();
+  const today_ = today();
+  const minAllowedDate = isBackdateAllowed ? (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - maxBackdateDays);
+    return d.toISOString().slice(0, 10);
+  })() : today_;
+
+  const [reportDate, setReportDate] = useState(today_);
   const [shift,    setShift]    = useState<Shift>(getDefaultShift);
   const [time,     setTime]     = useState(nowTime());
   const [areas,    setAreas]    = useState<AreaReport[]>(() => cams.map((c:any)=>({area:c.name,status:'ok',note:''})));
@@ -39,6 +49,14 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
   const SCHOOL_C  = activeSchool === 's1' ? '#1e5c3b' : '#1a4a7a';
   const SCHOOL_BG = activeSchool === 's1' ? '#f0f7f2' : '#eff4fb';
 
+  // Check if date is out of range
+  const isDateOutOfRange = reportDate < minAllowedDate || reportDate > today_;
+  const dateWarning = isDateOutOfRange ? (
+    reportDate > today_ ? 'ไม่สามารถบันทึกรายงานวันในอนาคตได้' :
+    !isBackdateAllowed ? 'ไม่อนุญาตให้บันทึกรายงานย้อนหลัง' :
+    `ไม่สามารถบันทึกรายงานเกินกว่า ${maxBackdateDays} วันได้`
+  ) : '';
+
   // Reset areas when school changes
   const handleSchoolChange = (sid: string) => {
     setActiveSchool(sid);
@@ -48,6 +66,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
     setIsNormal(true);
     setNote('');
     setPhotos([]);
+    setReportDate(today_);
   };
 
   const setNormalAll = () => {
@@ -122,13 +141,20 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
 
   const saveReport = async () => {
     if (isSubmitting) return;
+    
+    // Validate date range
+    if (isDateOutOfRange) {
+      toast(dateWarning, 'err');
+      return;
+    }
+
     const reports = load<DutyReport>(K.reports);
     const dup = reports.find(r =>
       r.schoolId === activeSchool && r.date === reportDate &&
       r.shift === shift
     );
     if (dup) {
-      toast(`กะ${shift==='morning'?'เช้า':'บ่าย'} ของ${reportDate === today() ? 'วันนี้' : fmtDate(reportDate)} ถูกรายงานไปแล้ว!`, 'err');
+      toast(`กะ${shift==='morning'?'เช้า':'บ่าย'} ของ${reportDate === today_ ? 'วันนี้' : fmtDate(reportDate)} ถูกรายงานไปแล้ว!`, 'err');
       return;
     }
 
@@ -210,7 +236,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
 
   return (
     <div>
-      <PageHeader title="บันทึกรายงานเวร" subtitle={`${school?.name || ''} · ${fmtDate(today())}`}>
+      <PageHeader title="บันทึกรายงานเวร" subtitle={`${school?.name || ''} · ${fmtDate(today_)}`}>
         <button onClick={() => onNav('dashboard')} style={{ background:'none', border:'1px solid #e5e0d4', borderRadius:7, padding:'7px 14px', fontSize:13, cursor:'pointer', fontFamily:'Sarabun,sans-serif', color:'#574f44' }}>ยกเลิก</button>
       </PageHeader>
 
@@ -239,11 +265,13 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
           </div>
         )}
 
-        {/* Date Picker */}
+        {/* Date Picker with Backdate Control */}
         <div style={cardStyle}>
           <label style={labelStyle}>วันที่รายงาน</label>
-          <input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} max={today()} style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:8, padding:'9px 12px', fontFamily:'IBM Plex Mono,monospace', fontSize:15, color:'#252018', outline:'none', width:'100%', marginBottom:14 }}/>
+          <input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} min={minAllowedDate} max={today_} style={{ background:'#fff', border: isDateOutOfRange ? '2px solid #b71c1c' : '1px solid #e5e0d4', borderRadius:8, padding:'9px 12px', fontFamily:'IBM Plex Mono,monospace', fontSize:15, color:'#252018', outline:'none', width:'100%', marginBottom:14 }}/>
           <div style={{ fontSize:12, color:'#a89f8c', fontWeight:500 }}>📅 {fmtDate(reportDate)}</div>
+          {isDateOutOfRange && <div style={{ fontSize:12, color:'#b71c1c', fontWeight:600, marginTop:8 }}>⚠️ {dateWarning}</div>}
+          {isBackdateAllowed && !isDateOutOfRange && <div style={{ fontSize:11, color:'#1e5c3b', marginTop:8 }}>✓ สามารถบันทึกรายงานย้อนหลังได้สูงสุด {maxBackdateDays} วัน</div>}
         </div>
 
         {/* Shift + Time */}
@@ -253,170 +281,86 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
             {(['morning','afternoon'] as Shift[]).map(s => (
               <button key={s} onClick={() => setShift(s)} style={{
                 border:`2px solid ${shift===s?sc:'#e5e0d4'}`, background:shift===s?bg:'#faf8f4',
-                borderRadius:10, padding:'13px', cursor:'pointer', textAlign:'center', fontFamily:'Sarabun,sans-serif',
+                borderRadius:10, padding:'12px', cursor:'pointer', fontFamily:'Sarabun,sans-serif', textAlign:'center',
               }}>
-                <div style={{ fontSize:26, marginBottom:3 }}>{s==='morning'?'🌅':'🌇'}</div>
-                <div style={{ fontSize:14, fontWeight:700, color:shift===s?sc:'#574f44' }}>{s==='morning'?'กะเช้า':'กะบ่าย'}</div>
-                <div style={{ fontSize:11, color:'#a89f8c' }}>{s==='morning'?'07:00–12:00':'12:00–17:00'} น.</div>
+                <div style={{ fontSize:14, fontWeight:700, color:shift===s?sc:'#574f44' }}>{s==='morning'?'🌅 เช้า':'🌆 บ่าย'}</div>
+                <div style={{ fontSize:11, color:'#a89f8c', marginTop:2 }}>{s==='morning'?'06:00 - 12:00':'12:00 - 18:00'}</div>
               </button>
             ))}
           </div>
-          <label style={labelStyle}>เวลาที่รายงาน</label>
-          <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:8, padding:'9px 12px', fontFamily:'IBM Plex Mono,monospace', fontSize:15, color:'#252018', outline:'none', width:160 }}/>
+          <label style={labelStyle}>เวลารายงาน</label>
+          <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:8, padding:'9px 12px', fontFamily:'IBM Plex Mono,monospace', fontSize:15, color:'#252018', outline:'none', width:'100%' }}/>
         </div>
 
-        {/* Quick: Normal */}
-        <button onClick={setNormalAll} style={{
-          width:'100%', marginBottom:14,
-          background: (isNormal && issueCount===0) ? sc : '#fff',
-          color: (isNormal && issueCount===0) ? '#faf8f4' : sc,
-          border:`2px solid ${sc}`, borderRadius:12, padding:'15px 20px',
-          fontSize:16, fontWeight:700, cursor:'pointer', fontFamily:'Sarabun,sans-serif',
-          display:'flex', alignItems:'center', justifyContent:'center', gap:10, transition:'all .15s',
-        }}>
-          <span style={{ fontSize:22 }}>✓</span>
-          เหตุการณ์ปกติ — ทุกจุดเรียบร้อยดี
-        </button>
-
-        {/* Area checklist */}
+        {/* Areas */}
         <div style={cardStyle}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-            <label style={{ ...labelStyle, marginBottom:0 }}>ตรวจสอบแต่ละจุด</label>
-            {issueCount > 0 && (
-              <span style={{ background:'#fde8e8', color:'#b71c1c', fontSize:11, fontWeight:700, padding:'3px 10px', borderRadius:20 }}>
-                ⚠ พบปัญหา {issueCount} จุด
-              </span>
-            )}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <label style={labelStyle}>สถานที่ {issueCount > 0 && <span style={{ color:'#b71c1c' }}>({issueCount} ปัญหา)</span>}</label>
+            <button onClick={setNormalAll} style={{ background:'#f0f7f2', border:'1px solid #b3dcc0', borderRadius:6, padding:'4px 10px', fontSize:12, cursor:'pointer', color:'#1e5c3b', fontFamily:'Sarabun,sans-serif' }}>✓ ปกติทั้งหมด</button>
           </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-            {areas.map((a, idx) => (
-              <div key={a.area} style={{
-                background:a.status==='issue'?'#fde8e8':'#faf8f4',
-                border:`1px solid ${a.status==='issue'?'rgba(183,28,28,.25)':'#e5e0d4'}`,
-                borderLeft:`3px solid ${a.status==='issue'?'#b71c1c':'#2e7d32'}`,
-                borderRadius:8, padding:'9px 13px',
-              }}>
-                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:a.status==='issue'?8:0 }}>
-                  <span style={{ flex:1, fontSize:14, fontWeight:600, color:'#252018' }}>{a.area}</span>
-                  <button onClick={() => updArea(idx,'status','ok')} style={{ padding:'5px 13px', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Sarabun,sans-serif', background:a.status==='ok'?'#e8f5e9':'#fff', color:a.status==='ok'?'#1b5e20':'#a89f8c', border:`1.5px solid ${a.status==='ok'?'#2e7d32':'#e5e0d4'}` }}>✓ ปกติ</button>
-                  <button onClick={() => updArea(idx,'status','issue')} style={{ padding:'5px 13px', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Sarabun,sans-serif', background:a.status==='issue'?'#fde8e8':'#fff', color:a.status==='issue'?'#b71c1c':'#a89f8c', border:`1.5px solid ${a.status==='issue'?'#b71c1c':'#e5e0d4'}` }}>⚠ พบปัญหา</button>
-                </div>
-                {a.status === 'issue' && (
-                  <input value={a.note} onInput={e => updArea(idx,'note',(e.target as HTMLInputElement).value)}
-                    placeholder="ระบุปัญหาที่พบ..."
-                    style={{ width:'100%', background:'#fff', border:'1px solid rgba(183,28,28,.25)', borderRadius:7, padding:'7px 11px', fontFamily:'Sarabun,sans-serif', fontSize:13, color:'#252018', outline:'none' }}/>
-                )}
+          {areas.map((a, i) => (
+            <div key={i} style={{ marginBottom:12, paddingBottom:12, borderBottom:i<areas.length-1?'1px solid #f3f0e8':'none' }}>
+              <div style={{ fontSize:13, fontWeight:600, color:'#252018', marginBottom:6 }}>{a.area}</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                {(['ok','issue'] as const).map(st => (
+                  <button key={st} onClick={() => updArea(i, 'status', st)} style={{
+                    border:`2px solid ${a.status===st?'#1e5c3b':'#e5e0d4'}`, background:a.status===st?'#f0f7f2':'#faf8f4',
+                    borderRadius:8, padding:'8px', cursor:'pointer', fontFamily:'Sarabun,sans-serif', fontSize:12, fontWeight:600,
+                    color:a.status===st?'#1e5c3b':'#574f44',
+                  }}>
+                    {st==='ok'?'✓ ปกติ':'⚠️ มีปัญหา'}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 📷 Photo section */}
-        <div style={cardStyle}>
-          <label style={labelStyle}>📷 แนบรูปรวม (ถ้ามี)</label>
-
-          {/* Upload zone */}
-          <div onClick={() => photos.length < 10 && fileRef.current?.click()} style={{
-            border:`2px dashed ${photos.length>=10?'#e5e0d4':sc+'60'}`, borderRadius:10,
-            padding:'20px', textAlign:'center', cursor:photos.length>=10?'default':'pointer',
-            background:bg, transition:'all .15s', marginBottom:photos.length?12:0,
-            opacity:photos.length>=10?0.5:1,
-          }}>
-            <div style={{ fontSize:30, marginBottom:6 }}>📷</div>
-            <div style={{ fontSize:14, fontWeight:600, color:sc }}>
-              {photos.length >= 10 ? 'ครบ 10 รูปแล้ว' : 'คลิกเพื่อเลือกรูปภาพ'}
+              {a.status==='issue' && (
+                <input type="text" value={a.note} onChange={e => updArea(i, 'note', e.target.value)} placeholder="อธิบายปัญหา..." style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:8, padding:'9px 12px', fontFamily:'Sarabun,sans-serif', fontSize:13, color:'#252018', outline:'none', width:'100%' }}/>
+              )}
             </div>
-            <div style={{ fontSize:11, color:'#a89f8c', marginTop:3 }}>
-              JPG, PNG · เหลือได้อีก {10-photos.length} รูป
-            </div>
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleFiles} style={{ display:'none' }}/>
-
-          {/* Photo grid */}
-          {photos.length > 0 && (
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(100px,1fr))', gap:8 }}>
-              {photos.map((p, i) => (
-                <div key={i} style={{ position:'relative', borderRadius:8, overflow:'hidden', aspectRatio:'4/3', border:'1px solid #e5e0d4' }}>
-                  <img src={p.data} style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
-                  {/* Size badge */}
-                  {p.originalSize && p.compressedSize && (
-                    <div style={{ position:'absolute', top:4, left:4, background:'rgba(0,0,0,.65)', padding:'2px 6px', borderRadius:4 }}>
-                      <span style={{ fontSize:8, color:'#4caf50', fontFamily:'IBM Plex Mono,monospace', fontWeight:700 }}>
-                        {(p.originalSize/1024/1024).toFixed(1)}MB → {(p.compressedSize/1024).toFixed(0)}KB
-                      </span>
-                    </div>
-                  )}
-                  <button onClick={() => removePhoto(i)} style={{ position:'absolute', top:4, right:4, width:20, height:20, borderRadius:'50%', background:'rgba(183,28,28,.8)', border:'none', color:'#fff', fontSize:11, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
-                </div>
-              ))}
-            </div>
-          )}
+          ))}
         </div>
 
         {/* Note */}
         <div style={cardStyle}>
-          <label style={labelStyle}>บันทึก / สรุปสถานการณ์</label>
-          <textarea value={note} onChange={e => setNote(e.target.value)} rows={3}
-            placeholder="บันทึกเหตุการณ์ ข้อสังเกต สิ่งที่ต้องติดตาม..."
-            style={{ width:'100%', background:'#faf8f4', border:'1px solid #e5e0d4', borderRadius:8, padding:'10px 12px', fontFamily:'Sarabun,sans-serif', fontSize:14, color:'#252018', outline:'none', resize:'vertical', marginBottom:8 }}/>
-          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-            {['เหตุการณ์ปกติ','ไม่มีผู้บุกรุก'].map(t => (
-              <button key={t} onClick={() => setNote(n => n?(n+' '+t):t)} style={{ background:bg, border:`1px solid ${sc}40`, borderRadius:20, padding:'4px 12px', fontSize:12, cursor:'pointer', color:sc, fontFamily:'Sarabun,sans-serif', fontWeight:500 }}>
-                + {t}
-              </button>
-            ))}
-          </div>
+          <label style={labelStyle}>หมายเหตุ</label>
+          <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="บันทึกเพิ่มเติม..." style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:8, padding:'9px 12px', fontFamily:'Sarabun,sans-serif', fontSize:13, color:'#252018', outline:'none', width:'100%', minHeight:80, resize:'vertical' }}/>
         </div>
 
-        {/* Signature + Submit */}
+        {/* Sign */}
         <div style={cardStyle}>
-          <label style={labelStyle}>ผู้รายงาน</label>
-          <input value={sign} onChange={e => setSign(e.target.value)} style={{ width:'100%', background:'#faf8f4', border:'1px solid #e5e0d4', borderRadius:8, padding:'9px 12px', fontFamily:'Sarabun,sans-serif', fontSize:14, color:'#252018', outline:'none' }}/>
+          <label style={labelStyle}>ลายเซ็น</label>
+          <input type="text" value={sign} onChange={e => setSign(e.target.value)} placeholder="ชื่อผู้บันทึก" style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:8, padding:'9px 12px', fontFamily:'Sarabun,sans-serif', fontSize:13, color:'#252018', outline:'none', width:'100%' }}/>
         </div>
 
-        {/* Summary + Submit */}
-        <div style={{ background:issueCount>0?'#fde8e8':bg, border:`1px solid ${issueCount>0?'rgba(183,28,28,.2)':sc+'40'}`, borderRadius:10, padding:'12px 16px', marginBottom:14, display:'flex', gap:12, alignItems:'center' }}>
-          <span style={{ fontSize:22 }}>{issueCount>0?'⚠':'✓'}</span>
-          <div>
-            <div style={{ fontSize:14, fontWeight:700, color:issueCount>0?'#b71c1c':sc }}>
-              {issueCount>0 ? `พบปัญหา ${issueCount} จุด` : 'ทุกจุดเรียบร้อย'}
+        {/* Photos */}
+        <div style={cardStyle}>
+          <label style={labelStyle}>รูปภาพ ({photos.length}/10)</label>
+          <button onClick={() => fileRef.current?.click()} style={{ background:'#f0f7f2', border:'1px solid #b3dcc0', borderRadius:8, padding:'10px', fontSize:13, cursor:'pointer', color:'#1e5c3b', fontFamily:'Sarabun,sans-serif', fontWeight:600, width:'100%', marginBottom:12 }}>📷 เพิ่มรูปภาพ</button>
+          <input ref={fileRef} type="file" multiple accept="image/*" onChange={handleFiles} style={{ display:'none' }}/>
+          {photos.map((p, i) => (
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px', background:'#faf8f4', borderRadius:8, marginBottom:8 }}>
+              <div style={{ flex:1, fontSize:12, color:'#5a5248' }}>{p.name}</div>
+              <button onClick={() => removePhoto(i)} style={{ background:'#fde8e8', border:'1px solid rgba(183,28,28,.2)', borderRadius:6, padding:'4px 10px', fontSize:12, cursor:'pointer', color:'#b71c1c', fontFamily:'Sarabun,sans-serif' }}>ลบ</button>
             </div>
-            <div style={{ fontSize:12, color:'#a89f8c' }}>
-              {photos.length > 0 ? `แนบรูป ${photos.length} รูป · ` : ''}
-              {shift==='morning'?'กะเช้า':'กะบ่าย'} · {time} น. · {school?.shortName}
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Upload progress bar */}
-        {isSubmitting && uploadProgress.total > 0 && (
-          <div style={{ marginBottom:14, background:'#fff', border:'1px solid #e5e0d4', borderRadius:10, padding:'14px 18px' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
-              <span style={{ fontSize:13, fontWeight:600, color:'#252018' }}>{uploadProgress.status}</span>
-              <span style={{ fontSize:12, color:'#a89f8c', fontFamily:'IBM Plex Mono,monospace' }}>
-                {uploadProgress.current}/{uploadProgress.total}
-              </span>
-            </div>
-            <div style={{ width:'100%', height:6, background:'#e5e0d4', borderRadius:3, overflow:'hidden' }}>
-              <div style={{
-                width:`${(uploadProgress.current / uploadProgress.total) * 100}%`,
-                height:'100%', background:sc, borderRadius:3,
-                transition:'width 0.3s ease',
-              }}/>
-            </div>
-          </div>
-        )}
-
+        {/* Submit */}
         <div style={{ display:'flex', gap:10 }}>
-          <button onClick={isSubmitting ? cancelUpload : saveReport} style={{ 
-            flex:1, background:isSubmitting?'#b71c1c':sc, color:'#faf8f4', border:'none', 
-            borderRadius:12, padding:'15px', fontSize:16, fontWeight:700, 
-            cursor:'pointer', fontFamily:'Sarabun,sans-serif',
-            transition:'background 0.2s',
-          }}>
-            {isSubmitting ? '✕ ยกเลิกการอัพโหลด' : '💾 บันทึกรายงานเวร'}
+          <button onClick={() => onNav('dashboard')} style={{ flex:1, background:'#fff', border:'1px solid #e5e0d4', borderRadius:8, padding:'12px', fontSize:14, fontWeight:600, cursor:'pointer', fontFamily:'Sarabun,sans-serif', color:'#574f44' }}>ยกเลิก</button>
+          <button onClick={saveReport} disabled={isSubmitting || isDateOutOfRange} style={{ flex:1, background:isDateOutOfRange?'#ccc':sc, color:isDateOutOfRange?'#999':'#fff', border:'none', borderRadius:8, padding:'12px', fontSize:14, fontWeight:600, cursor:isDateOutOfRange||isSubmitting?'not-allowed':'pointer', fontFamily:'Sarabun,sans-serif' }}>
+            {isSubmitting ? `${uploadProgress.status}` : '💾 บันทึกรายงาน'}
           </button>
         </div>
+        {isSubmitting && uploadProgress.total > 0 && (
+          <div style={{ marginTop:12, padding:12, background:'#f0f7f2', borderRadius:8 }}>
+            <div style={{ fontSize:12, color:'#1e5c3b', fontWeight:600, marginBottom:6 }}>{uploadProgress.status}</div>
+            <div style={{ width:'100%', height:6, background:'#e0f2f1', borderRadius:3, overflow:'hidden' }}>
+              <div style={{ width:`${(uploadProgress.current/uploadProgress.total)*100}%`, height:'100%', background:'#1e5c3b', transition:'width 0.3s' }}/>
+            </div>
+            <div style={{ fontSize:11, color:'#5a5248', marginTop:6 }}>{uploadProgress.current}/{uploadProgress.total}</div>
+            <button onClick={cancelUpload} style={{ marginTop:8, background:'#fde8e8', border:'1px solid rgba(183,28,28,.2)', borderRadius:6, padding:'6px 12px', fontSize:12, cursor:'pointer', color:'#b71c1c', fontFamily:'Sarabun,sans-serif', fontWeight:600, width:'100%' }}>ยกเลิก</button>
+          </div>
+        )}
       </div>
     </div>
   );

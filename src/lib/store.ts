@@ -8,6 +8,7 @@ export const K = {
   activeSchool:'cctv_active_school',
   activeUser:  'active_user',
   users:       'app_users',
+  adminSettings: 'admin_settings',
 };
 
 export function load<T>(key: string): T[] {
@@ -63,6 +64,21 @@ export interface LoginLog {
   schoolId: string | null;
   success: boolean;
   failReason?: string;
+}
+export interface AdminSettings {
+  id: string;
+  allowBackdateReport: boolean;
+  backdateMaxDays: number;
+  lastModified: number;
+  modifiedBy: string;
+}
+export interface AdminActivityLog {
+  id: string;
+  timestamp: number;
+  adminId: string;
+  adminName: string;
+  action: string;
+  details: string;
 }
 
 // ── Labels ──
@@ -134,6 +150,37 @@ export function setSchoolLogo(schoolId: string, dataUrl: string): void {
   localStorage.setItem('logo_' + schoolId, dataUrl);
 }
 
+// ── Admin Settings helpers ──
+export function getAdminSettings(): AdminSettings {
+  try {
+    const settings = load<AdminSettings>(K.adminSettings);
+    return settings[0] || {
+      id: 'settings-default',
+      allowBackdateReport: false,
+      backdateMaxDays: 7,
+      lastModified: Date.now(),
+      modifiedBy: 'system'
+    };
+  } catch {
+    return {
+      id: 'settings-default',
+      allowBackdateReport: false,
+      backdateMaxDays: 7,
+      lastModified: Date.now(),
+      modifiedBy: 'system'
+    };
+  }
+}
+export function saveAdminSettings(settings: AdminSettings): void {
+  save(K.adminSettings, [settings]);
+}
+export function isBackdateReportAllowed(): boolean {
+  return getAdminSettings().allowBackdateReport;
+}
+export function getBackdateMaxDays(): number {
+  return getAdminSettings().backdateMaxDays;
+}
+
 // ── Seed ──
 export function seedData() {
   if (localStorage.getItem(K.schools)) return;
@@ -196,4 +243,14 @@ export function seedData() {
   save(K.cams, cams);
   save(K.reports, reports);
   save(K.duty, []);
+  
+  // Initialize admin settings
+  const adminSettings: AdminSettings = {
+    id: 'settings-default',
+    allowBackdateReport: false,
+    backdateMaxDays: 7,
+    lastModified: Date.now(),
+    modifiedBy: 'system'
+  };
+  save(K.adminSettings, [adminSettings]);
 }

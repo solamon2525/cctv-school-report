@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { load, save, K, AppUser, School, Camera, DutySchedule, DutyReport, today, fmtDate, Shift, clearAdminSession, getSchoolLogo, setSchoolLogo, LoginLog } from '../lib/store';
+import { load, save, K, AppUser, School, Camera, DutySchedule, DutyReport, today, fmtDate, Shift, clearAdminSession, getSchoolLogo, setSchoolLogo, LoginLog, AdminSettings, getAdminSettings, saveAdminSettings, getBackdateMaxDays } from '../lib/store';
 import { saveUser, deleteUser, saveDuty, deleteDuty, clearAllDatabase, importDatabase, saveSchool, getLoginLogs } from '../lib/firebase';
 import { toast } from '../lib/toast';
 import PageHeader from '../components/PageHeader';
 import Cameras from './Cameras';
 
 const inp=(s?:React.CSSProperties):React.CSSProperties=>({background:'#fff',border:'1px solid #e5e0d4',borderRadius:8,padding:'9px 12px',fontFamily:'Sarabun,sans-serif',fontSize:14,color:'#252018',outline:'none',width:'100%',...s});
-const ROLE_LABEL:Record<string,string>={director:'ผู้อำนวยการ',admin:'ครู (Admin)',teacher:'ครู'};
+const ROLE_LABEL:Record<string,string>={director:'ผู้อำนวยการ',admin:'Admin (ผู้ดูแลระบบ)',teacher:'ครู'};
 const COLS=['#1e5c3b','#1a4a7a','#8a4f00','#7a1a4a','#3a6b8a'];
 const SCHOOL_C:Record<string,string>={s1:'#1e5c3b',s2:'#1a4a7a'};
 
@@ -522,8 +522,101 @@ function LoginLogs() {
   );
 }
 
+function SettingsMgmt({ user }: { user: AppUser }) {
+  const [settings, setSettings] = useState<AdminSettings>(getAdminSettings());
+  const [maxDays, setMaxDays] = useState(settings.backdateMaxDays.toString());
+
+  const handleSave = () => {
+    const updated: AdminSettings = {
+      ...settings,
+      backdateMaxDays: parseInt(maxDays) || 7,
+      lastModified: Date.now(),
+      modifiedBy: user.id
+    };
+    saveAdminSettings(updated);
+    setSettings(updated);
+    toast('บันทึกการตั้งค่าแล้ว', 'ok');
+  };
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
+      <div style={{ flex: '1 1 350px', background: '#fff', border: '1px solid #e5e0d4', borderRadius: 12, padding: 20 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#252018', marginBottom: 16 }}>⚙️ การตั้งค่าระบบ</div>
+        
+        <div style={{ marginBottom: 20, padding: 16, background: '#f0f7f2', borderRadius: 8, border: '1px solid #b3dcc0' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#1e5c3b', marginBottom: 8 }}>📝 บันทึกย้อนหลัง (Backdate Report)</div>
+          <div style={{ fontSize: 12, color: '#5a5248', marginBottom: 12 }}>อนุญาตให้ครูบันทึกรายงานของวันที่ผ่านมาได้</div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 500 }}>
+              <input
+                type="checkbox"
+                checked={settings.allowBackdateReport}
+                onChange={(e) => setSettings({ ...settings, allowBackdateReport: e.target.checked })}
+                style={{ width: 18, height: 18, cursor: 'pointer' }}
+              />
+              <span style={{ color: '#252018' }}>เปิดใช้งาน</span>
+            </label>
+          </div>
+
+          {settings.allowBackdateReport && (
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#a89f8c', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>จำนวนวันที่อนุญาต</label>
+              <input
+                type="number"
+                min="1"
+                max="30"
+                value={maxDays}
+                onChange={(e) => setMaxDays(e.target.value)}
+                style={{
+                  background: '#fff',
+                  border: '1px solid #e5e0d4',
+                  borderRadius: 8,
+                  padding: '9px 12px',
+                  fontFamily: 'Sarabun,sans-serif',
+                  fontSize: 14,
+                  color: '#252018',
+                  outline: 'none',
+                  width: '100%'
+                }}
+              />
+              <div style={{ fontSize: 11, color: '#a89f8c', marginTop: 4 }}>ครูสามารถบันทึกรายงานย้อนหลังได้สูงสุด {maxDays} วัน</div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={handleSave}
+            style={{
+              flex: 1,
+              background: '#1e5c3b',
+              color: '#faf8f4',
+              border: 'none',
+              borderRadius: 8,
+              padding: 10,
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'Sarabun,sans-serif'
+            }}
+          >
+            💾 บันทึกการตั้งค่า
+          </button>
+        </div>
+
+        <div style={{ marginTop: 16, padding: 12, background: '#faf8f4', borderRadius: 8, fontSize: 11, color: '#5a5248' }}>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>ข้อมูลการแก้ไขล่าสุด:</div>
+          <div>เมื่อ: {new Date(settings.lastModified).toLocaleString('th-TH')}</div>
+          <div>โดย: {user.name}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:()=>void }) {
-  const [sub,setSub]=useState<'duty'|'users'|'cameras'|'database'|'schools'|'logs'>('schools');
+  const [sub,setSub]=useState<'duty'|'users'|'cameras'|'database'|'schools'|'logs'|'settings'>('schools');
   const handleLogout=()=>{ clearAdminSession(); toast('ออกจากระบบ Admin','warn'); onLogout(); };
   return(
     <div>
@@ -531,7 +624,7 @@ export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:
         <button onClick={handleLogout} style={{background:'#fde8e8',color:'#b71c1c',border:'1px solid rgba(183,28,28,.2)',borderRadius:7,padding:'7px 14px',fontSize:13,cursor:'pointer',fontFamily:'Sarabun,sans-serif',fontWeight:600}}>🔒 ออก Admin</button>
       </PageHeader>
       <div style={{background:'#fff',borderBottom:'1px solid #e5e0d4',display:'flex',padding:'0 24px',gap:2,overflowX:'auto',whiteSpace:'nowrap'}}>
-        {([['schools','🏫','ข้อมูลโรงเรียน'],['duty','📅','ตารางเวร'],['cameras','📹','ตั้งชื่อกล้อง'],['users','👨‍🏫','จัดการผู้ใช้'],['database','💾','ฐานข้อมูล'],['logs','🔍','Log เข้าสู่ระบบ']] as const).map(([id,ic,lb])=>(
+        {([['schools','🏫','ข้อมูลโรงเรียน'],['duty','📅','ตารางเวร'],['cameras','📹','ตั้งชื่อกล้อง'],['users','👨‍🏫','จัดการผู้ใช้'],['settings','⚙️','การตั้งค่า'],['database','💾','ฐานข้อมูล'],['logs','🔍','Log เข้าสู่ระบบ']] as const).map(([id,ic,lb])=>(
           <button key={id} onClick={()=>setSub(id as any)} style={{padding:'10px 18px',fontSize:14,fontWeight:sub===id?600:400,color:sub===id?'#1e5c3b':'#a89f8c',borderBottom:sub===id?'2px solid #1e5c3b':'2px solid transparent',background:'none',border:'none',cursor:'pointer',fontFamily:'Sarabun,sans-serif',display:'flex',alignItems:'center',gap:6}}>
             {ic} {lb}
           </button>
@@ -542,6 +635,7 @@ export default function AdminPanel({ user, onLogout }: { user:AppUser; onLogout:
         {sub==='duty'&&<DutyMgmt/>}
         {sub==='cameras'&&<CamMgmt user={user}/>}
         {sub==='users'&&<UserMgmt/>}
+        {sub==='settings'&&<SettingsMgmt user={user}/>}
         {sub==='database'&&<DatabaseMgmt/>}
         {sub==='logs'&&<LoginLogs/>}
       </div>
