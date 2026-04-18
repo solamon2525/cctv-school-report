@@ -17,6 +17,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
 
   const getDefaultShift = (): Shift => new Date().getHours() < 12 ? 'morning' : 'afternoon';
 
+  const [reportDate, setReportDate] = useState(today());
   const [shift,    setShift]    = useState<Shift>(getDefaultShift);
   const [time,     setTime]     = useState(nowTime());
   const [areas,    setAreas]    = useState<AreaReport[]>(() => cams.map((c:any)=>({area:c.name,status:'ok',note:''})));
@@ -123,11 +124,11 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
     if (isSubmitting) return;
     const reports = load<DutyReport>(K.reports);
     const dup = reports.find(r =>
-      r.schoolId === activeSchool && r.date === today() &&
+      r.schoolId === activeSchool && r.date === reportDate &&
       r.shift === shift
     );
     if (dup) {
-      toast(`กะ${shift==='morning'?'เช้า':'บ่าย'} ของวันนี้ถูกรายงานไปแล้ว!`, 'err');
+      toast(`กะ${shift==='morning'?'เช้า':'บ่าย'} ของ${reportDate === today() ? 'วันนี้' : fmtDate(reportDate)} ถูกรายงานไปแล้ว!`, 'err');
       return;
     }
 
@@ -175,7 +176,7 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
       setUploadProgress({ current: photos.length, total: photos.length, status: 'กำลังบันทึกรายงาน...' });
 
       const rpt: DutyReport = {
-        id: reportId, schoolId:activeSchool, date:today(), shift,
+        id: reportId, schoolId:activeSchool, date:reportDate, shift,
         reporterId:user.id, time, isNormal, areas, note:note.trim(),
         sign:sign.trim(), photos: uploadedPhotos, timestamp:Date.now(),
       };
@@ -237,6 +238,13 @@ export default function NewReport({ user, onNav, schoolId }: Props) {
             </div>
           </div>
         )}
+
+        {/* Date Picker */}
+        <div style={cardStyle}>
+          <label style={labelStyle}>วันที่รายงาน</label>
+          <input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} max={today()} style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:8, padding:'9px 12px', fontFamily:'IBM Plex Mono,monospace', fontSize:15, color:'#252018', outline:'none', width:'100%', marginBottom:14 }}/>
+          <div style={{ fontSize:12, color:'#a89f8c', fontWeight:500 }}>📅 {fmtDate(reportDate)}</div>
+        </div>
 
         {/* Shift + Time */}
         <div style={cardStyle}>
