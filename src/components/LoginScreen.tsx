@@ -88,6 +88,22 @@ export default function LoginScreen({ onLogin }: Props) {
 
       <div style={{ width:'100%', maxWidth: step==='select'?540:340, animation: 'fade-in 0.3s ease-out' }}>
         {step === 'select' && (
+          <div style={{ marginBottom: 16, textAlign: 'right' }}>
+            <span style={{ 
+              fontSize: '10px', 
+              color: 'var(--text-tertiary)', 
+              background: 'rgba(255, 255, 255, 0.5)', 
+              padding: '4px 10px', 
+              borderRadius: '20px',
+              border: '1px solid var(--border-light)',
+              fontFamily: 'IBM Plex Mono, monospace',
+              fontWeight: 600
+            }}>
+              BUILD v2.1.0 • 19 APR 2026 14:30
+            </span>
+          </div>
+        )}
+        {step === 'select' && (
           <div style={{ background:'rgba(255, 255, 255, 0.95)', border:'1px solid var(--border-light)', borderRadius:20, overflow:'hidden', boxShadow:'0 20px 50px rgba(0, 0, 0, 0.1)' }}>
             <div style={{ padding:'18px 24px', borderBottom:'1px solid var(--border-light)', fontSize:12, fontWeight:700, background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.03) 0%, rgba(16, 185, 129, 0.03) 100%)', color:'var(--primary-600)', textTransform:'uppercase', letterSpacing:'.08em' }}>เลือกผู้ใช้งาน</div>
             {[
