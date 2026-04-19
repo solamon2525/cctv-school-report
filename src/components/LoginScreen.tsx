@@ -139,48 +139,71 @@ export default function LoginScreen({ onLogin }: Props) {
           background: rgba(255, 255, 255, 0.08) !important;
           transform: translateX(4px);
         }
+        @media (max-width: 480px) {
+          .login-container {
+            padding: 24px 20px !important;
+            border-radius: 28px !important;
+          }
+          .keypad-btn {
+            height: 60px !important;
+            font-size: 24px !important;
+          }
+          .keypad-gap {
+            gap: 12px !important;
+          }
+          .school-logo {
+            width: 72px !important;
+            height: 72px !important;
+          }
+          .user-avatar {
+            width: 72px !important;
+            height: 72px !important;
+          }
+        }
       `}</style>
 
       {/* Content wrapper with relative positioning */}
-      <div style={{ position: 'relative', zIndex: 10 }}>
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: step==='select'?540:380, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {/* School logos — side by side */}
-        <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:32, marginTop:24, flexWrap:'wrap', justifyContent:'center' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:24, marginTop:8, flexWrap:'wrap', justifyContent:'center' }}>
           {schools.map((s, i) => {
             const logo = getSchoolLogo(s.id);
             return (
               <React.Fragment key={s.id}>
                 <div style={{ textAlign:'center', animation: 'slide-up 0.5s ease-out' }}>
                   {logo ? (
-                    <img src={logo} alt={s.name}
+                    <img src={logo} alt={s.name} className="school-logo"
                       style={{ width:88, height:88, objectFit:'contain', borderRadius:16, border:'3px solid rgba(255, 255, 255, 0.3)', background:'rgba(255, 255, 255, 0.1)', padding:6, boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)' }}/>
                   ) : (
-                    <div style={{ width:88, height:88, borderRadius:16, background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%)', border: '2px solid rgba(255, 255, 255, 0.3)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)' }}>
+                    <div className="school-logo" style={{ width:88, height:88, borderRadius:16, background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%)', border: '2px solid rgba(255, 255, 255, 0.3)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)' }}>
                       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="3.5"/><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2"/>
                       </svg>
                     </div>
                   )}
-                  <div style={{ fontSize:13, fontWeight:700, color: '#fff', marginTop:10, maxWidth:110, fontFamily:'Prompt,sans-serif', textShadow: '0 2px 8px rgba(0, 0, 0, 0.2)' }}>{s.shortName}</div>
+                  <div style={{ fontSize:12, fontWeight:700, color: '#fff', marginTop:8, maxWidth:100, fontFamily:'Prompt,sans-serif', textShadow: '0 2px 8px rgba(0, 0, 0, 0.2)' }}>{s.shortName}</div>
                 </div>
                 {i < schools.length-1 && (
-                  <div style={{ fontSize:24, color:'rgba(255, 255, 255, 0.3)', fontWeight:300, margin:'0 8px' }}>·</div>
+                  <div style={{ fontSize:24, color:'rgba(255, 255, 255, 0.3)', fontWeight:300, margin:'0 4px' }}>·</div>
                 )}
               </React.Fragment>
             );
           })}
         </div>
 
-        <div style={{ fontSize:20, fontWeight:700, color: '#fff', marginBottom:6, fontFamily:'Prompt,sans-serif', textShadow: '0 2px 8px rgba(0, 0, 0, 0.2)' }}>ระบบรายงานเวรประจำวัน</div>
-        <div style={{ fontSize:14, color:'rgba(255, 255, 255, 0.85)', marginBottom:28, fontWeight: 500, textShadow: '0 1px 4px rgba(0, 0, 0, 0.1)' }}>กลุ่มโรงเรียนบ้านคำไผ่ – บ้านหินเหลิ่ง</div>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{ fontSize:20, fontWeight:700, color: '#fff', marginBottom:4, fontFamily:'Prompt,sans-serif', textShadow: '0 2px 8px rgba(0, 0, 0, 0.2)' }}>ระบบรายงานเวรประจำวัน</div>
+          <div style={{ fontSize:13, color:'rgba(255, 255, 255, 0.85)', fontWeight: 500, textShadow: '0 1px 4px rgba(0, 0, 0, 0.1)' }}>กลุ่มโรงเรียนบ้านคำไผ่ – บ้านหินเหลิ่ง</div>
+        </div>
 
-        <div style={{ width:'100%', maxWidth: step==='select'?540:340, animation: 'fade-in 0.3s ease-out' }}>
+        <div style={{ width:'100%', animation: 'fade-in 0.3s ease-out' }}>
           {step === 'select' && (
-            <div style={{ marginBottom: 16, textAlign: 'right' }}>
+            <div style={{ marginBottom: 12, textAlign: 'center' }}>
               <span style={{ 
                 fontSize: '10px', 
                 color: 'rgba(255, 255, 255, 0.7)', 
                 background: 'rgba(255, 255, 255, 0.1)', 
-                padding: '6px 12px', 
+                padding: '4px 12px', 
                 borderRadius: '20px',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
                 fontFamily: 'IBM Plex Mono, monospace',
@@ -188,20 +211,20 @@ export default function LoginScreen({ onLogin }: Props) {
                 backdropFilter: 'blur(10px)',
                 display: 'inline-block'
               }}>
-                BUILD v2.2.0 • 19 APR 2026 14:30
+                BUILD v2.2.1 • 19 APR 2026
               </span>
             </div>
           )}
           {step === 'select' && (
-            <div style={{ background:'rgba(255, 255, 255, 0.95)', border:'1px solid rgba(255, 255, 255, 0.3)', borderRadius:24, overflow:'hidden', boxShadow:'0 25px 50px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(10px)' }}>
-              <div style={{ padding:'20px 24px', borderBottom:'1px solid rgba(0, 0, 0, 0.05)', fontSize:12, fontWeight:700, background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%)', color:'var(--primary-600)', textTransform:'uppercase', letterSpacing:'.08em' }}>เลือกผู้ใช้งาน</div>
+            <div className="login-container" style={{ background:'rgba(255, 255, 255, 0.95)', border:'1px solid rgba(255, 255, 255, 0.3)', borderRadius:24, overflow:'hidden', boxShadow:'0 25px 50px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(10px)' }}>
+              <div style={{ padding:'16px 24px', borderBottom:'1px solid rgba(0, 0, 0, 0.05)', fontSize:12, fontWeight:700, background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%)', color:'var(--primary-600)', textTransform:'uppercase', letterSpacing:'.08em' }}>เลือกผู้ใช้งาน</div>
               {[
                 { label:'ผู้บริหาร',            users: users.filter(u=>u.role==='director') },
                 { label:'โรงเรียนบ้านคำไผ่',    users: users.filter(u=>u.schoolId==='s1') },
                 { label:'โรงเรียนบ้านหินเหลิ่ง',users: users.filter(u=>u.schoolId==='s2') },
               ].map(group => (
                 <div key={group.label}>
-                  <div style={{ padding:'12px 24px 8px', fontSize:11, fontWeight:700, color:'var(--text-tertiary)', textTransform:'uppercase', letterSpacing:'.08em', background:'rgba(0, 0, 0, 0.02)', borderBottom:'1px solid rgba(0, 0, 0, 0.05)' }}>{group.label}</div>
+                  <div style={{ padding:'10px 24px 6px', fontSize:11, fontWeight:700, color:'var(--text-tertiary)', textTransform:'uppercase', letterSpacing:'.08em', background:'rgba(0, 0, 0, 0.02)', borderBottom:'1px solid rgba(0, 0, 0, 0.05)' }}>{group.label}</div>
                   {group.users.map((u, idx) => (
                     <button key={u.id} onClick={() => { setSelUser(u); setStep('pin'); setPin(''); setDots(0); setErr(''); }}
                       className="login-user-row"
@@ -210,7 +233,7 @@ export default function LoginScreen({ onLogin }: Props) {
                         display:'flex', 
                         alignItems:'center', 
                         gap:14, 
-                        padding:'16px 24px', 
+                        padding:'14px 24px', 
                         background:'none', 
                         border:'none', 
                         borderBottom:'1px solid rgba(0, 0, 0, 0.05)', 
@@ -221,17 +244,16 @@ export default function LoginScreen({ onLogin }: Props) {
                         animation: `slide-up 0.4s ease-out ${idx * 0.05}s both`
                       }}>
                       {u.photoUrl ? (
-                        <img src={u.photoUrl} alt={u.name} style={{ width:48, height:48, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:`3px solid ${ROLE_COLOR[u.role]}40`, boxShadow: `0 4px 12px ${ROLE_COLOR[u.role]}30`, transition: 'all 0.3s' }} />
+                        <img src={u.photoUrl} alt={u.name} style={{ width:44, height:44, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:`3px solid ${ROLE_COLOR[u.role]}40`, boxShadow: `0 4px 12px ${ROLE_COLOR[u.role]}30`, transition: 'all 0.3s' }} />
                       ) : (
-                        <div style={{ width:48, height:48, borderRadius:'50%', background: `linear-gradient(135deg, ${ROLE_COLOR[u.role]} 0%, ${ROLE_COLOR[u.role]}dd 100%)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, fontWeight:700, color:'#fff', flexShrink:0, boxShadow: `0 4px 12px ${ROLE_COLOR[u.role]}30`, transition: 'all 0.3s' }}>
+                        <div style={{ width:44, height:44, borderRadius:'50%', background: `linear-gradient(135deg, ${ROLE_COLOR[u.role]} 0%, ${ROLE_COLOR[u.role]}dd 100%)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#fff', flexShrink:0, boxShadow: `0 4px 12px ${ROLE_COLOR[u.role]}30`, transition: 'all 0.3s' }}>
                           {u.name.split(' ').slice(-1)[0].slice(0,2)}
                         </div>
                       )}
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize:15, fontWeight:600, color:'var(--text-primary)' }}>{u.name}</div>
-                        <div style={{ fontSize:12, color:'var(--text-tertiary)' }}>{ROLE_LABEL[u.role]} · {schoolName(u.schoolId)}</div>
+                        <div style={{ fontSize:14, fontWeight:600, color:'var(--text-primary)' }}>{u.name}</div>
+                        <div style={{ fontSize:11, color:'var(--text-tertiary)' }}>{ROLE_LABEL[u.role]} · {schoolName(u.schoolId)}</div>
                       </div>
-                      <span style={{ color:'var(--text-tertiary)', fontSize:20, opacity:0.4, transition: 'all 0.3s' }}>›</span>
                     </button>
                   ))}
                 </div>
@@ -240,41 +262,44 @@ export default function LoginScreen({ onLogin }: Props) {
           )}
 
           {step === 'pin' && selUser && (
-            <div style={{ background:'rgba(255, 255, 255, 0.95)', border:'1px solid rgba(255, 255, 255, 0.3)', borderRadius:24, padding:'40px 32px', boxShadow:'0 25px 50px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(255, 255, 255, 0.5)', textAlign:'center', animation: 'bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)', backdropFilter: 'blur(10px)' }}>
+            <div className="login-container" style={{ background:'rgba(255, 255, 255, 0.95)', border:'1px solid rgba(255, 255, 255, 0.3)', borderRadius:24, padding:'32px 24px', boxShadow:'0 25px 50px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(255, 255, 255, 0.5)', textAlign:'center', animation: 'bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)', backdropFilter: 'blur(10px)' }}>
               <button onClick={() => { setStep('select'); setPin(''); setDots(0); setErr(''); }}
-                style={{ display:'block', background:'none', border:'none', color:'var(--primary-600)', fontSize:14, cursor:'pointer', marginBottom:20, fontFamily:'Noto Sans Thai,sans-serif', fontWeight: 600, transition: 'all 0.3s', padding:'6px 12px', borderRadius: '8px' }}>
+                style={{ display:'inline-flex', alignItems:'center', background:'rgba(16, 185, 129, 0.08)', border:'none', color:'var(--primary-600)', fontSize:13, cursor:'pointer', marginBottom:20, fontFamily:'Noto Sans Thai,sans-serif', fontWeight: 600, transition: 'all 0.3s', padding:'6px 14px', borderRadius: '12px' }}>
                 ‹ กลับ
               </button>
               {selUser.photoUrl ? (
-                <img src={selUser.photoUrl} alt={selUser.name} style={{ width:80, height:80, borderRadius:'50%', objectFit:'cover', margin:'0 auto 16px', display:'block', border:`4px solid ${ROLE_COLOR[selUser.role]}`, boxShadow: `0 8px 24px ${ROLE_COLOR[selUser.role]}40`, animation: 'slide-up 0.4s ease-out' }} />
+                <img src={selUser.photoUrl} alt={selUser.name} className="user-avatar" style={{ width:80, height:80, borderRadius:'50%', objectFit:'cover', margin:'0 auto 12px', display:'block', border:`4px solid ${ROLE_COLOR[selUser.role]}`, boxShadow: `0 8px 24px ${ROLE_COLOR[selUser.role]}40`, animation: 'slide-up 0.4s ease-out' }} />
               ) : (
-                <div style={{ width:80, height:80, borderRadius:'50%', background: `linear-gradient(135deg, ${ROLE_COLOR[selUser.role]} 0%, ${ROLE_COLOR[selUser.role]}dd 100%)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, fontWeight:700, color:'#fff', margin:'0 auto 16px', boxShadow: `0 8px 24px ${ROLE_COLOR[selUser.role]}40`, animation: 'slide-up 0.4s ease-out' }}>
+                <div className="user-avatar" style={{ width:80, height:80, borderRadius:'50%', background: `linear-gradient(135deg, ${ROLE_COLOR[selUser.role]} 0%, ${ROLE_COLOR[selUser.role]}dd 100%)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, fontWeight:700, color:'#fff', margin:'0 auto 12px', boxShadow: `0 8px 24px ${ROLE_COLOR[selUser.role]}40`, animation: 'slide-up 0.4s ease-out' }}>
                   {selUser.name.split(' ').slice(-1)[0].slice(0,2)}
                 </div>
               )}
-              <div style={{ fontSize:18, fontWeight:700, color:'var(--text-primary)', marginBottom:6, fontFamily:'Prompt,sans-serif' }}>{selUser.name}</div>
-              <div style={{ fontSize:13, color:'var(--text-tertiary)', marginBottom:32, fontWeight: 500 }}>{ROLE_LABEL[selUser.role]}</div>
-              <div className={shaking ? 'pin-shake' : ''} style={{ display:'flex', justifyContent:'center', gap:20, marginBottom:36 }}>
+              <div style={{ fontSize:17, fontWeight:700, color:'var(--text-primary)', marginBottom:4, fontFamily:'Prompt,sans-serif' }}>{selUser.name}</div>
+              <div style={{ fontSize:12, color:'var(--text-tertiary)', marginBottom:24, fontWeight: 500 }}>{ROLE_LABEL[selUser.role]}</div>
+              
+              <div className={shaking ? 'pin-shake' : ''} style={{ display:'flex', justifyContent:'center', gap:16, marginBottom:28 }}>
                 {[0,1,2,3].map(i => (
-                  <div key={i} style={{ width:18, height:18, borderRadius:'50%', background:i<dots?ROLE_COLOR[selUser.role]:'rgba(0, 0, 0, 0.1)', transition:'all .2s cubic-bezier(0.34, 1.56, 0.64, 1)', boxShadow: i<dots ? `0 0 0 6px ${ROLE_COLOR[selUser.role]}25` : 'none', transform: i<dots ? 'scale(1.1)' : 'scale(1)' }}/>
+                  <div key={i} style={{ width:14, height:14, borderRadius:'50%', background:i<dots?ROLE_COLOR[selUser.role]:'rgba(0, 0, 0, 0.1)', transition:'all .2s cubic-bezier(0.34, 1.56, 0.64, 1)', boxShadow: i<dots ? `0 0 0 5px ${ROLE_COLOR[selUser.role]}25` : 'none', transform: i<dots ? 'scale(1.1)' : 'scale(1)' }}/>
                 ))}
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:16 }}>
+
+              <div className="keypad-gap" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:12 }}>
                 {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((d,i) => (
                   <button key={i} onClick={() => d==='⌫'?handleBack():d?handleDigit(d):null}
                     disabled={!d&&d!=='0'}
+                    className="keypad-btn"
                     style={{ 
-                      height: 68, 
+                      height: 64, 
                       borderRadius: 16, 
                       background: d==='⌫' ? 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)' : d ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)' : 'transparent', 
                       border: d ? '1.5px solid rgba(0, 0, 0, 0.08)' : 'none', 
-                      fontSize: d==='⌫' ? 26 : 28, 
+                      fontSize: d==='⌫' ? 24 : 26, 
                       fontWeight: 700, 
                       color: d==='⌫' ? '#E11D48' : 'var(--text-primary)', 
                       cursor: d ? 'pointer' : 'default', 
                       fontFamily: 'IBM Plex Mono,monospace', 
                       opacity: !d && d!=='0' ? 0 : 1,
-                      boxShadow: d ? '0 4px 12px rgba(0, 0, 0, 0.1)' : 'none',
+                      boxShadow: d ? '0 4px 12px rgba(0, 0, 0, 0.08)' : 'none',
                       transition: 'all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)',
                     }}
                     onPointerDown={(e) => {
@@ -286,13 +311,13 @@ export default function LoginScreen({ onLogin }: Props) {
                     onPointerUp={(e) => {
                       if (d) {
                         e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
                       }
                     }}
                     onPointerLeave={(e) => {
                       if (d) {
                         e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
                       }
                     }}
                     >
@@ -300,7 +325,7 @@ export default function LoginScreen({ onLogin }: Props) {
                   </button>
                 ))}
               </div>
-              {err && <div style={{ color:'#E11D48', fontSize:13, background:'rgba(225, 29, 72, 0.1)', borderRadius:12, padding:'12px 16px', fontWeight: 600, border: '1.5px solid rgba(225, 29, 72, 0.2)', animation: 'slide-up 0.3s ease-out' }}>{err}</div>}
+              {err && <div style={{ color:'#E11D48', fontSize:12, background:'rgba(225, 29, 72, 0.1)', borderRadius:12, padding:'10px 16px', fontWeight: 600, border: '1.5px solid rgba(225, 29, 72, 0.2)', animation: 'slide-up 0.3s ease-out', marginTop: 8 }}>{err}</div>}
             </div>
           )}
         </div>
