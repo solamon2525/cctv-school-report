@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { load, saveVal, startAdminSession, AppUser, School, K, getSchoolLogo } from '../lib/store';
 import { addLoginLog } from '../lib/firebase';
 import { toast } from '../lib/toast';
@@ -12,9 +12,21 @@ export default function LoginScreen({ onLogin }: Props) {
   const [dots, setDots]   = useState<number>(0);
   const [err, setErr]     = useState('');
   const [shaking, setShaking] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
 
   const users   = load<AppUser>(K.users);
   const schools = load<School>(K.schools);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const handleDigit = (d: string) => {
     if (dots >= 4) return;
@@ -70,36 +82,10 @@ export default function LoginScreen({ onLogin }: Props) {
         pointerEvents: 'none'
       }} />
 
-      {/* Floating orbs */}
-      <div style={{
-        position: 'absolute',
-        width: '300px',
-        height: '300px',
-        background: 'radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)',
-        borderRadius: '50%',
-        top: '-100px',
-        right: '-100px',
-        animation: 'float 20s ease-in-out infinite'
-      }} />
-      <div style={{
-        position: 'absolute',
-        width: '250px',
-        height: '250px',
-        background: 'radial-gradient(circle, rgba(45, 212, 191, 0.08) 0%, transparent 70%)',
-        borderRadius: '50%',
-        bottom: '-80px',
-        left: '-80px',
-        animation: 'float 25s ease-in-out infinite reverse'
-      }} />
-
       <style>{`
         @keyframes gradient-shift {
           0%, 100% { filter: hue-rotate(0deg); }
           50% { filter: hue-rotate(10deg); }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(30px); }
         }
         @keyframes slide-up {
           from { opacity: 0; transform: translateY(20px); }
@@ -109,63 +95,89 @@ export default function LoginScreen({ onLogin }: Props) {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        @keyframes bounce-in {
-          0% { opacity: 0; transform: scale(0.95); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes pin-shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-8px); }
-          75% { transform: translateX(8px); }
+        @keyframes marquee {
+          0% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
         }
         .login-user-row {
           position: relative;
           overflow: hidden;
-        }
-        .login-user-row::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-          transition: left 0.5s;
-        }
-        .login-user-row:hover::before {
-          left: 100%;
+          transition: all 0.2s ease;
         }
         .login-user-row:hover {
-          background: rgba(255, 255, 255, 0.08) !important;
-          transform: translateX(4px);
+          background: rgba(16, 185, 129, 0.05) !important;
+          transform: scale(1.01);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+          z-index: 1;
+        }
+        .marquee-container {
+          width: 100%;
+          overflow: hidden;
+          white-space: nowrap;
+          background: rgba(0, 0, 0, 0.2);
+          color: #fff;
+          padding: 6px 0;
+          position: absolute;
+          top: 0;
+          left: 0;
+          z-index: 100;
+          backdrop-filter: blur(5px);
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .marquee-text {
+          display: inline-block;
+          animation: marquee 20s linear infinite;
+          font-size: 13px;
+          font-weight: 500;
         }
         @media (max-width: 480px) {
           .login-container {
-            padding: 24px 20px !important;
-            border-radius: 28px !important;
-          }
-          .keypad-btn {
-            height: 60px !important;
-            font-size: 24px !important;
-          }
-          .keypad-gap {
-            gap: 12px !important;
+            border-radius: 20px !important;
           }
           .school-logo {
-            width: 72px !important;
-            height: 72px !important;
-          }
-          .user-avatar {
-            width: 72px !important;
-            height: 72px !important;
+            width: 80px !important;
+            height: 80px !important;
           }
         }
       `}</style>
 
-      {/* Content wrapper with relative positioning */}
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: step==='select'?540:380, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        {/* School logos — side by side */}
-        <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:24, marginTop:8, flexWrap:'wrap', justifyContent:'center' }}>
+      {/* Marquee Banner */}
+      <div className="marquee-container">
+        <div className="marquee-text">
+          📣 ประกาศ: ครูเวร สามารถ login และบันทึกข้อมูลได้ตามเวรประจำวัน &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+          📣 ประกาศ: ครูเวร สามารถ login และบันทึกข้อมูลได้ตามเวรประจำวัน
+        </div>
+      </div>
+
+      {/* Content wrapper */}
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: step==='select'?540:380, display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 40 }}>
+        
+        {/* Status Indicator */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 6, 
+          background: 'rgba(0,0,0,0.3)', 
+          padding: '4px 10px', 
+          borderRadius: '20px', 
+          marginBottom: 20,
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          <div style={{ 
+            width: 8, 
+            height: 8, 
+            borderRadius: '50%', 
+            background: isOnline ? '#10B981' : '#EF4444',
+            boxShadow: isOnline ? '0 0 8px #10B981' : '0 0 8px #EF4444'
+          }} />
+          <span style={{ color: '#fff', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            {isOnline ? 'System Online' : 'System Offline'}
+          </span>
+        </div>
+
+        {/* School logos */}
+        <div style={{ display:'flex', alignItems:'center', gap:20, marginBottom:24, flexWrap:'wrap', justifyContent:'center' }}>
           {schools.map((s, i) => {
             const logo = getSchoolLogo(s.id);
             return (
@@ -173,87 +185,49 @@ export default function LoginScreen({ onLogin }: Props) {
                 <div style={{ textAlign:'center', animation: 'slide-up 0.5s ease-out' }}>
                   {logo ? (
                     <img src={logo} alt={s.name} className="school-logo"
-                      style={{ width:100, height:100, objectFit:'contain' }}/>
+                      style={{ width:90, height:90, objectFit:'contain' }}/>
                   ) : (
-                    <div className="school-logo" style={{ width:88, height:88, borderRadius:16, background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%)', border: '2px solid rgba(255, 255, 255, 0.3)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)' }}>
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="3.5"/><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2"/>
-                      </svg>
+                    <div className="school-logo" style={{ width:80, height:80, borderRadius:16, background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.3)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><circle cx="12" cy="12" r="3.5"/><path d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2M16 4h2a2 2 0 012 2v2M16 20h2a2 2 0 002-2v-2"/></svg>
                     </div>
                   )}
-                  <div style={{ fontSize:12, fontWeight:700, color: '#fff', marginTop:8, maxWidth:100, fontFamily:'Prompt,sans-serif', textShadow: '0 2px 8px rgba(0, 0, 0, 0.2)' }}>{s.shortName}</div>
+                  <div style={{ fontSize:12, fontWeight:700, color: '#fff', marginTop:8, fontFamily:'Prompt,sans-serif' }}>{s.shortName}</div>
                 </div>
-                {i < schools.length-1 && (
-                  <div style={{ fontSize:24, color:'rgba(255, 255, 255, 0.3)', fontWeight:300, margin:'0 4px' }}>·</div>
-                )}
+                {i < schools.length-1 && <div style={{ fontSize:20, color:'rgba(255,255,255,0.3)' }}>·</div>}
               </React.Fragment>
             );
           })}
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize:20, fontWeight:700, color: '#fff', marginBottom:4, fontFamily:'Prompt,sans-serif', textShadow: '0 2px 8px rgba(0, 0, 0, 0.2)' }}>ระบบรายงานเวรประจำวัน</div>
-          <div style={{ fontSize:13, color:'rgba(255, 255, 255, 0.85)', fontWeight: 500, textShadow: '0 1px 4px rgba(0, 0, 0, 0.1)' }}>กลุ่มโรงเรียนบ้านคำไผ่ – บ้านหินเหลิ่ง</div>
+          <div style={{ fontSize:22, fontWeight:700, color: '#fff', marginBottom:4, fontFamily:'Prompt,sans-serif' }}>ระบบรายงานเวรประจำวัน</div>
+          <div style={{ fontSize:14, color:'rgba(255, 255, 255, 0.8)', fontWeight: 500 }}>กลุ่มโรงเรียนบ้านคำไผ่ – บ้านหินเหลิ่ง</div>
         </div>
 
         <div style={{ width:'100%', animation: 'fade-in 0.3s ease-out' }}>
           {step === 'select' && (
-            <div style={{ marginBottom: 12, textAlign: 'center' }}>
-              <span style={{ 
-                fontSize: '10px', 
-                color: 'rgba(255, 255, 255, 0.7)', 
-                background: 'rgba(255, 255, 255, 0.1)', 
-                padding: '4px 12px', 
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                fontFamily: 'IBM Plex Mono, monospace',
-                fontWeight: 600,
-                backdropFilter: 'blur(10px)',
-                display: 'inline-block'
-              }}>
-                BUILD v2.2.1 • 19 APR 2026
-              </span>
-            </div>
-          )}
-          {step === 'select' && (
-            <div className="login-container" style={{ background:'rgba(255, 255, 255, 0.95)', border:'1px solid rgba(255, 255, 255, 0.3)', borderRadius:24, overflow:'hidden', boxShadow:'0 25px 50px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(10px)' }}>
-              <div style={{ padding:'16px 24px', borderBottom:'1px solid rgba(0, 0, 0, 0.05)', fontSize:12, fontWeight:700, background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%)', color:'var(--primary-600)', textTransform:'uppercase', letterSpacing:'.08em' }}>เลือกผู้ใช้งาน</div>
+            <div className="login-container" style={{ background:'#fff', borderRadius:20, overflow:'hidden', boxShadow:'0 20px 40px rgba(0,0,0,0.2)' }}>
+              <div style={{ padding:'14px 20px', borderBottom:'1px solid #eee', fontSize:13, fontWeight:700, color:'#064E3B', background: '#f8faf9' }}>เลือกผู้ใช้งาน</div>
               {[
-                { label:'ผู้บริหาร',            users: users.filter(u=>u.role==='director') },
-                { label:'โรงเรียนบ้านคำไผ่',    users: users.filter(u=>u.schoolId==='s1') },
-                { label:'โรงเรียนบ้านหินเหลิ่ง',users: users.filter(u=>u.schoolId==='s2') },
+                { label:'ผู้บริหาร', users: users.filter(u=>u.role==='director') },
+                { label:'โรงเรียนบ้านคำไผ่', users: users.filter(u=>u.schoolId==='s1') },
+                { label:'โรงเรียนบ้านหินเหลิ่ง', users: users.filter(u=>u.schoolId==='s2') },
               ].map(group => (
                 <div key={group.label}>
-                  <div style={{ padding:'10px 24px 6px', fontSize:11, fontWeight:700, color:'var(--text-tertiary)', textTransform:'uppercase', letterSpacing:'.08em', background:'rgba(0, 0, 0, 0.02)', borderBottom:'1px solid rgba(0, 0, 0, 0.05)' }}>{group.label}</div>
+                  <div style={{ padding:'8px 20px', fontSize:11, fontWeight:700, color:'#666', textTransform:'uppercase', background:'#fcfcfc', borderBottom:'1px solid #f0f0f0' }}>{group.label}</div>
                   {group.users.map((u, idx) => (
                     <button key={u.id} onClick={() => { setSelUser(u); setStep('pin'); setPin(''); setDots(0); setErr(''); }}
                       className="login-user-row"
                       style={{ 
-                        width:'100%', 
-                        display:'flex', 
-                        alignItems:'center', 
-                        gap:14, 
-                        padding:'14px 24px', 
-                        background:'none', 
-                        border:'none', 
-                        borderBottom:'1px solid rgba(0, 0, 0, 0.05)', 
-                        cursor:'pointer', 
-                        textAlign:'left', 
-                        fontFamily:'Noto Sans Thai,sans-serif', 
-                        transition:'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                        animation: `slide-up 0.4s ease-out ${idx * 0.05}s both`
+                        width:'100%', display:'flex', alignItems:'center', gap:12, padding:'12px 20px', 
+                        background:'none', border:'none', borderBottom:'1px solid #f5f5f5', cursor:'pointer', textAlign:'left'
                       }}>
-                      {u.photoUrl ? (
-                        <img src={u.photoUrl} alt={u.name} style={{ width:44, height:44, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:`3px solid ${ROLE_COLOR[u.role]}40`, boxShadow: `0 4px 12px ${ROLE_COLOR[u.role]}30`, transition: 'all 0.3s' }} />
-                      ) : (
-                        <div style={{ width:44, height:44, borderRadius:'50%', background: `linear-gradient(135deg, ${ROLE_COLOR[u.role]} 0%, ${ROLE_COLOR[u.role]}dd 100%)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#fff', flexShrink:0, boxShadow: `0 4px 12px ${ROLE_COLOR[u.role]}30`, transition: 'all 0.3s' }}>
-                          {u.name.split(' ').slice(-1)[0].slice(0,2)}
-                        </div>
-                      )}
+                      <img src={u.photoUrl || 'https://placehold.co/100?text=USER'} alt={u.name} style={{ width:40, height:40, borderRadius:'50%', objectFit:'cover', border:`2px solid ${ROLE_COLOR[u.role]}` }} />
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize:14, fontWeight:600, color:'var(--text-primary)' }}>{u.name}</div>
-                        <div style={{ fontSize:11, color:'var(--text-tertiary)' }}>{ROLE_LABEL[u.role]} · {schoolName(u.schoolId)}</div>
+                        <div style={{ fontSize:14, fontWeight:700, color:'#333' }}>{u.name}</div>
+                        <div style={{ fontSize:11, color:'#888' }}>{ROLE_LABEL[u.role]} • {schoolName(u.schoolId)}</div>
                       </div>
+                      <div style={{ color:'#ccc' }}>›</div>
                     </button>
                   ))}
                 </div>
@@ -262,72 +236,36 @@ export default function LoginScreen({ onLogin }: Props) {
           )}
 
           {step === 'pin' && selUser && (
-            <div className="login-container" style={{ background:'rgba(255, 255, 255, 0.95)', border:'1px solid rgba(255, 255, 255, 0.3)', borderRadius:24, padding:'32px 24px', boxShadow:'0 25px 50px rgba(0, 0, 0, 0.3), inset 0 0 1px rgba(255, 255, 255, 0.5)', textAlign:'center', animation: 'bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)', backdropFilter: 'blur(10px)' }}>
-              <button onClick={() => { setStep('select'); setPin(''); setDots(0); setErr(''); }}
-                style={{ display:'inline-flex', alignItems:'center', background:'rgba(16, 185, 129, 0.08)', border:'none', color:'var(--primary-600)', fontSize:13, cursor:'pointer', marginBottom:20, fontFamily:'Noto Sans Thai,sans-serif', fontWeight: 600, transition: 'all 0.3s', padding:'6px 14px', borderRadius: '12px' }}>
-                ‹ กลับ
-              </button>
-              {selUser.photoUrl ? (
-                <img src={selUser.photoUrl} alt={selUser.name} className="user-avatar" style={{ width:80, height:80, borderRadius:'50%', objectFit:'cover', margin:'0 auto 12px', display:'block', border:`4px solid ${ROLE_COLOR[selUser.role]}`, boxShadow: `0 8px 24px ${ROLE_COLOR[selUser.role]}40`, animation: 'slide-up 0.4s ease-out' }} />
-              ) : (
-                <div className="user-avatar" style={{ width:80, height:80, borderRadius:'50%', background: `linear-gradient(135deg, ${ROLE_COLOR[selUser.role]} 0%, ${ROLE_COLOR[selUser.role]}dd 100%)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, fontWeight:700, color:'#fff', margin:'0 auto 12px', boxShadow: `0 8px 24px ${ROLE_COLOR[selUser.role]}40`, animation: 'slide-up 0.4s ease-out' }}>
-                  {selUser.name.split(' ').slice(-1)[0].slice(0,2)}
-                </div>
-              )}
-              <div style={{ fontSize:17, fontWeight:700, color:'var(--text-primary)', marginBottom:4, fontFamily:'Prompt,sans-serif' }}>{selUser.name}</div>
-              <div style={{ fontSize:12, color:'var(--text-tertiary)', marginBottom:24, fontWeight: 500 }}>{ROLE_LABEL[selUser.role]}</div>
+            <div className="login-container" style={{ background:'#fff', borderRadius:24, padding:32, textAlign:'center', boxShadow:'0 20px 40px rgba(0,0,0,0.2)' }}>
+              <button onClick={()=>setStep('select')} style={{ position:'absolute', top:20, left:20, background:'none', border:'none', color:'#999', cursor:'pointer', fontSize:14 }}>← กลับ</button>
+              <img src={selUser.photoUrl || 'https://placehold.co/100?text=USER'} alt={selUser.name} style={{ width:80, height:80, borderRadius:'50%', marginBottom:16, border:`4px solid ${ROLE_COLOR[selUser.role]}` }} />
+              <div style={{ fontSize:18, fontWeight:700, color:'#333' }}>{selUser.name}</div>
+              <div style={{ fontSize:13, color:'#666', marginBottom:24 }}>กรุณาใส่รหัส PIN 4 หลัก</div>
               
-              <div className={shaking ? 'pin-shake' : ''} style={{ display:'flex', justifyContent:'center', gap:16, marginBottom:28 }}>
+              <div style={{ display:'flex', justifyContent:'center', gap:12, marginBottom:32 }}>
                 {[0,1,2,3].map(i => (
-                  <div key={i} style={{ width:14, height:14, borderRadius:'50%', background:i<dots?ROLE_COLOR[selUser.role]:'rgba(0, 0, 0, 0.1)', transition:'all .2s cubic-bezier(0.34, 1.56, 0.64, 1)', boxShadow: i<dots ? `0 0 0 5px ${ROLE_COLOR[selUser.role]}25` : 'none', transform: i<dots ? 'scale(1.1)' : 'scale(1)' }}/>
+                  <div key={i} style={{ width:16, height:16, borderRadius:'50%', border:'2px solid #ddd', background: dots > i ? '#064E3B' : 'none', transition:'all 0.2s' }} />
                 ))}
               </div>
 
-              <div className="keypad-gap" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:12 }}>
-                {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((d,i) => (
-                  <button key={i} onClick={() => d==='⌫'?handleBack():d?handleDigit(d):null}
-                    disabled={!d&&d!=='0'}
-                    className="keypad-btn"
-                    style={{ 
-                      height: 64, 
-                      borderRadius: 16, 
-                      background: d==='⌫' ? 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)' : d ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)' : 'transparent', 
-                      border: d ? '1.5px solid rgba(0, 0, 0, 0.08)' : 'none', 
-                      fontSize: d==='⌫' ? 24 : 26, 
-                      fontWeight: 700, 
-                      color: d==='⌫' ? '#E11D48' : 'var(--text-primary)', 
-                      cursor: d ? 'pointer' : 'default', 
-                      fontFamily: 'IBM Plex Mono,monospace', 
-                      opacity: !d && d!=='0' ? 0 : 1,
-                      boxShadow: d ? '0 4px 12px rgba(0, 0, 0, 0.08)' : 'none',
-                      transition: 'all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    }}
-                    onPointerDown={(e) => {
-                      if (d) {
-                        e.currentTarget.style.transform = 'scale(0.92)';
-                        e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.08)';
-                      }
-                    }}
-                    onPointerUp={(e) => {
-                      if (d) {
-                        e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
-                      }
-                    }}
-                    onPointerLeave={(e) => {
-                      if (d) {
-                        e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
-                      }
-                    }}
-                    >
-                    {d}
-                  </button>
+              {err && <div style={{ color:'#EF4444', fontSize:13, marginBottom:16, fontWeight:600 }}>{err}</div>}
+
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:16 }}>
+                {[1,2,3,4,5,6,7,8,9].map(d => (
+                  <button key={d} onClick={()=>handleDigit(d.toString())} style={{ height:60, borderRadius:12, border:'1px solid #eee', background:'#fcfcfc', fontSize:20, fontWeight:700, color:'#333', cursor:'pointer' }}>{d}</button>
                 ))}
+                <div />
+                <button onClick={()=>handleDigit('0')} style={{ height:60, borderRadius:12, border:'1px solid #eee', background:'#fcfcfc', fontSize:20, fontWeight:700, color:'#333', cursor:'pointer' }}>0</button>
+                <button onClick={handleBack} style={{ height:60, borderRadius:12, border:'none', background:'none', color:'#999', cursor:'pointer' }}>⌫</button>
               </div>
-              {err && <div style={{ color:'#E11D48', fontSize:12, background:'rgba(225, 29, 72, 0.1)', borderRadius:12, padding:'10px 16px', fontWeight: 600, border: '1.5px solid rgba(225, 29, 72, 0.2)', animation: 'slide-up 0.3s ease-out', marginTop: 8 }}>{err}</div>}
             </div>
           )}
+        </div>
+        
+        <div style={{ marginTop: 24, textAlign: 'center' }}>
+          <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.5)', background: 'rgba(0,0,0,0.1)', padding: '4px 12px', borderRadius: '20px' }}>
+            BUILD v2.2.2 • 19 APR 2026
+          </span>
         </div>
       </div>
     </div>
