@@ -68,9 +68,9 @@ export default function App() {
   const canAdmin = user.role==='admin';
 
   return (
-    <div style={{ minHeight:'100vh', background:'var(--neutral-0)', fontFamily:'Sarabun,sans-serif' }}>
+    <div style={{ minHeight:'100vh', background:'var(--bg-secondary)', fontFamily:'Noto Sans Thai,sans-serif' }}>
       {/* Top Header Row (Logo & User Profile) */}
-      <div style={{ background:'linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.95) 100%)', borderBottom:'1px solid rgba(15, 163, 133, 0.1)', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 20px', boxShadow:'0 4px 12px rgba(15, 163, 133, 0.08)' }}>
+      <div style={{ background:'rgba(255, 255, 255, 0.8)', backdropFilter:'blur(12px)', borderBottom:'1px solid var(--border-light)', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 24px', boxShadow:'0 2px 8px rgba(0, 0, 0, 0.04)' }}>
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
           {user.schoolId ? (
@@ -100,22 +100,22 @@ export default function App() {
             </div>
           )}
           <div>
-            <div style={{ fontSize:14, fontWeight:800, background: 'linear-gradient(135deg, #0fa385 0%, #1bb89f 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight:1 }}>ระบบรายงานเวร</div>
-            <div style={{ fontSize:11, color:'#a8a29e', marginTop:2, fontWeight: 500 }}>
+            <div style={{ fontSize:15, fontWeight:700, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight:1, fontFamily:'Prompt,sans-serif' }}>ระบบรายงานเวร</div>
+            <div style={{ fontSize:12, color:'var(--text-tertiary)', marginTop:3, fontWeight: 500 }}>
               {user.schoolId ? load<School>(K.schools).find(s=>s.id===user.schoolId)?.shortName||'กลุ่มโรงเรียน' : 'กลุ่มโรงเรียน'}
             </div>
           </div>
         </div>
 
         {/* User info + logout */}
-        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:14 }}>
           <div style={{ textAlign:'right', display:'flex', flexDirection:'column', justifyContent:'center' }}>
-            <div style={{ fontSize:13, fontWeight:700, color:'#292524', lineHeight:1 }}>{user.name.split(' ')[0]}</div>
-            <div style={{ fontSize:11, color:'#a8a29e', marginTop:2, fontWeight: 500 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'var(--text-primary)', lineHeight:1 }}>{user.name.split(' ')[0]}</div>
+            <div style={{ fontSize:12, color:'var(--text-tertiary)', marginTop:3, fontWeight: 500 }}>
               {user.role==='director'?'ผู้อำนวยการ':user.role==='admin'?'Admin (ผู้ดูแลระบบ)':load<School>(K.schools).find(s=>s.id===user.schoolId)?.shortName||''}
             </div>
           </div>
-          <button onClick={onLogout} className="btn-ghost" style={{ padding:'8px 16px', fontSize:13, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={onLogout} className="btn-ghost" style={{ padding:'8px 14px', fontSize:13, display: 'flex', alignItems: 'center', gap: 6 }}>
             <LogOut size={16} />
             ออก
           </button>
@@ -123,7 +123,7 @@ export default function App() {
       </div>
 
       {/* Sticky Nav Links Row */}
-      <div style={{ background:'linear-gradient(to bottom, #fff 0%, rgba(255,255,255,0.98) 100%)', borderBottom:'1px solid rgba(15, 163, 133, 0.1)', position:'sticky', top:0, zIndex:100, display:'flex', overflowX:'auto', padding:'8px 12px', gap:4, boxShadow:'0 2px 8px rgba(15, 163, 133, 0.06)' }}>
+      <div style={{ background:'rgba(255, 255, 255, 0.75)', backdropFilter:'blur(10px)', borderBottom:'1px solid var(--border-light)', position:'sticky', top:0, zIndex:100, display:'flex', overflowX:'auto', padding:'10px 16px', gap:6, boxShadow:'0 2px 4px rgba(0, 0, 0, 0.02)' }}>
         {([
           ['dashboard', <LayoutDashboard size={17}/>, 'แดชบอร์ด'],
           user.role === 'director' ? ['director-feed', <ImageIcon size={17}/>, 'สมุดรายงาน'] : ['new-report', <PenSquare size={17}/>, 'บันทึกรายงาน'],
@@ -135,9 +135,9 @@ export default function App() {
             style={{
               display:'flex', alignItems:'center', gap:8, padding:'10px 16px', height:44,
               border:'none', borderBottom:'none',
-              color: page===p ? '#fff' : 'var(--neutral-600)',
+              color: page===p ? '#fff' : 'var(--text-secondary)',
               fontSize:14, fontWeight: page===p ? 700 : 500,
-              cursor:'pointer', fontFamily:'Sarabun,sans-serif', whiteSpace:'nowrap',
+              cursor:'pointer', fontFamily:'Noto Sans Thai,sans-serif', whiteSpace:'nowrap',
               borderRadius: 'var(--r-md)',
               transition: 'all 0.2s ease-out'
             }}>

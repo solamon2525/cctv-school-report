@@ -1,6 +1,7 @@
 import React from 'react';
 import { load, K, DutyReport, School, AppUser, fmtDate, today } from '../lib/store';
 import PageHeader from '../components/PageHeader';
+import DashboardCard from '../components/DashboardCard';
 import { FileText, ShieldCheck, TrendingDown, AlertCircle, CheckCircle2, Trophy, Users } from 'lucide-react';
 
 interface Props { user: AppUser; onNav:(p:any)=>void; schoolId:string; }
@@ -202,25 +203,28 @@ export default function Dashboard({ user, onNav, schoolId }: Props) {
               )}
 
               {/* Hero KPI Cards */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))', gap:16 }}>
-                <div style={{ background:'linear-gradient(135deg, #1e5c3b, #143d27)', borderRadius:16, padding:20, color:'#fff', boxShadow:'0 4px 20px rgba(30,92,59,0.2)' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, opacity:0.8, textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>
-                    <FileText size={16} /> รายงานวันนี้
-                  </div>
-                  <div style={{ fontSize:36, fontWeight:700, fontFamily:'IBM Plex Mono,monospace', lineHeight:1 }}>{todayRpts.length}</div>
-                </div>
-                <div style={{ background:todayIssues>0 ? 'linear-gradient(135deg, #d32f2f, #9a0007)' : 'linear-gradient(135deg, #2e7d32, #1b5e20)', borderRadius:16, padding:20, color:'#fff', boxShadow:todayIssues>0 ? '0 4px 20px rgba(211,47,47,0.3)' : '0 4px 20px rgba(46,125,50,0.2)' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, opacity:0.8, textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>
-                    <ShieldCheck size={16} /> สถานะเครือข่าย
-                  </div>
-                  <div style={{ fontSize:28, fontWeight:700, lineHeight:1.3 }}>{todayIssues>0 ? `⚠ ${todayIssues} ปัญหาด่วน` : '🟢 ปกติทั้งหมด'}</div>
-                </div>
-                <div style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:16, padding:20, boxShadow:'0 4px 15px rgba(0,0,0,0.03)' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'#a89f8c', textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>
-                    <TrendingDown size={16} /> ปัญหาด่วนในเดือนนี้
-                  </div>
-                  <div style={{ fontSize:36, fontWeight:700, color:'#252018', fontFamily:'IBM Plex Mono,monospace', lineHeight:1 }}>{monthIssues}</div>
-                </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(240px, 1fr))', gap:16 }}>
+                <DashboardCard
+                  title="รายงานวันนี้"
+                  value={todayRpts.length}
+                  icon={<FileText size={18} />}
+                  color="primary"
+                  gradient
+                />
+                <DashboardCard
+                  title="สถานะเครือข่าย"
+                  value={todayIssues>0 ? `⚠ ${todayIssues}` : '🟢'}
+                  subtitle={todayIssues>0 ? 'ปัญหาด่วน' : 'ปกติทั้งหมด'}
+                  icon={<ShieldCheck size={18} />}
+                  color={todayIssues>0 ? 'error' : 'success'}
+                  gradient
+                />
+                <DashboardCard
+                  title="ปัญหาด่วนในเดือนนี้"
+                  value={monthIssues}
+                  icon={<TrendingDown size={18} />}
+                  color="warning"
+                />
               </div>
 
               {/* School Status Cards */}
@@ -233,15 +237,15 @@ export default function Dashboard({ user, onNav, schoolId }: Props) {
                   const stColor = issues > 0 ? '#d32f2f' : (hasMorn || hasAftn ? '#2e7d32' : '#a89f8c');
                   const stBg = issues > 0 ? '#fde8e8' : (hasMorn || hasAftn ? '#e8f5e9' : '#f3f0e8');
                   return (
-                    <div key={s.id} style={{ background:'#fff', border:`1px solid ${stColor}40`, borderLeft:`4px solid ${stColor}`, borderRadius:12, padding:'16px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', boxShadow:issues>0?'0 0 15px rgba(211,47,47,0.15)':'none' }}>
+                    <div key={s.id} style={{ background:'rgba(255, 255, 255, 0.95)', border:`1px solid ${stColor}40`, borderLeft:`4px solid ${stColor}`, borderRadius:14, padding:'18px 22px', display:'flex', alignItems:'center', justifyContent:'space-between', boxShadow:issues>0?'0 4px 12px rgba(225, 29, 72, 0.12)':'0 2px 8px rgba(0, 0, 0, 0.03)', transition:'all 0.3s ease' }}>
                       <div>
-                        <div style={{ fontSize:16, fontWeight:700, color:'#252018', marginBottom:4 }}>{s.name}</div>
-                        <div style={{ display:'flex', gap:8, fontSize:12, color:'#574f44' }}>
+                        <div style={{ fontSize:16, fontWeight:700, color:'var(--text-primary)', marginBottom:6 }}>{s.name}</div>
+                        <div style={{ display:'flex', gap:10, fontSize:12, color:'var(--text-secondary)' }}>
                           <span style={{ opacity:hasMorn?1:0.4 }}>🌅 เช้า {hasMorn?'✓':'—'}</span>
                           <span style={{ opacity:hasAftn?1:0.4 }}>🌇 บ่าย {hasAftn?'✓':'—'}</span>
                         </div>
                       </div>
-                      <div style={{ background:stBg, color:stColor, padding:'6px 14px', borderRadius:20, fontSize:13, fontWeight:700 }}>
+                      <div style={{ background:stBg, color:stColor, padding:'7px 16px', borderRadius:20, fontSize:13, fontWeight:700 }}>
                         {issues > 0 ? `⚠ ${issues} ปัญหา` : (hasMorn || hasAftn ? '✓ ปกติ' : '⏳ รอรายงาน')}
                       </div>
                     </div>
