@@ -75,7 +75,7 @@ export default function App() {
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
           {user.schoolId ? (
             getSchoolLogo(user.schoolId) ? (
-              <img src={getSchoolLogo(user.schoolId)} alt="logo" style={{ width:38, height:38, objectFit:'contain', borderRadius:10, background:'#fff', border:'1.5px solid rgba(15, 163, 133, 0.2)', padding:2, boxShadow: '0 2px 6px rgba(15, 163, 133, 0.1)' }} />
+              <img src={getSchoolLogo(user.schoolId)} alt="logo" style={{ width:42, height:42, objectFit:'contain' }} />
             ) : (
               <div style={{ width:38, height:38, background:'linear-gradient(135deg, #0fa385 0%, #1bb89f 100%)', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', boxShadow: '0 2px 6px rgba(15, 163, 133, 0.2)' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -88,7 +88,7 @@ export default function App() {
               {load<School>(K.schools).map(s => {
                 const logo = getSchoolLogo(s.id);
                 return logo ? (
-                  <img key={s.id} src={logo} alt="logo" style={{ width:38, height:38, objectFit:'contain', borderRadius:10, background:'#fff', border:'1.5px solid rgba(15, 163, 133, 0.2)', padding:2, boxShadow: '0 2px 6px rgba(15, 163, 133, 0.1)' }} />
+                  <img key={s.id} src={logo} alt="logo" style={{ width:42, height:42, objectFit:'contain' }} />
                 ) : (
                   <div key={s.id} style={{ width:38, height:38, background: s.id==='s1'?'linear-gradient(135deg, #0fa385 0%, #1bb89f 100%)':'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)' }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

@@ -173,7 +173,7 @@ export default function LoginScreen({ onLogin }: Props) {
                 <div style={{ textAlign:'center', animation: 'slide-up 0.5s ease-out' }}>
                   {logo ? (
                     <img src={logo} alt={s.name} className="school-logo"
-                      style={{ width:88, height:88, objectFit:'contain', borderRadius:16, border:'3px solid rgba(255, 255, 255, 0.3)', background:'rgba(255, 255, 255, 0.1)', padding:6, boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)' }}/>
+                      style={{ width:100, height:100, objectFit:'contain' }}/>
                   ) : (
                     <div className="school-logo" style={{ width:88, height:88, borderRadius:16, background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%)', border: '2px solid rgba(255, 255, 255, 0.3)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)' }}>
                       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

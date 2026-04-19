@@ -419,7 +419,7 @@ function SchoolMgmt() {
       {schools.map(s => (
         <div key={s.id} style={{ background:'#fff', border:'1px solid #e5e0d4', borderRadius:12, padding:24, width: 320, textAlign:'center' }}>
           <div style={{ fontSize:16, fontWeight:700, marginBottom:16, color:'#252018' }}>{s.name}</div>
-          <div style={{ background:'#faf8f4', padding:16, borderRadius:8, marginBottom:16, display:'inline-block' }}>
+          <div style={{ padding:16, marginBottom:16, display:'inline-block' }}>
             <img 
               src={s.logoUrl || getSchoolLogo(s.id) || 'https://placehold.co/100?text=NO+LOGO'} 
               alt={s.name}
